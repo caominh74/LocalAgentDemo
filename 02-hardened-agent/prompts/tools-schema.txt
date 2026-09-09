@@ -1,0 +1,138 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "read",
+      "description": "Read file contents from the workspace filesystem with strict path boundaries.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Relative or absolute path to the target file. Must not navigate outside allowed workspace."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional 1-indexed line offset to start reading from."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "description": "Optional maximum number of lines to return."
+          }
+        },
+        "required": ["path"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write",
+      "description": "Create a new file or completely overwrite an existing file. Requires Tier 2 approval.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Target file path."
+          },
+          "content": {
+            "type": "string",
+            "description": "Full textual content to write into the file."
+          }
+        },
+        "required": ["path", "content"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "edit",
+      "description": "Perform surgical search-and-replace of an exact text block in a file. Requires Tier 2 approval.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Target file path."
+          },
+          "oldText": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact existing text block to be replaced. Must match character-for-character."
+          },
+          "newText": {
+            "type": "string",
+            "description": "New replacement text block."
+          }
+        },
+        "required": ["path", "oldText", "newText"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "bash",
+      "description": "Execute a shell command inside the workspace directory. Requires Tier 3 confirmation with command preview.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The shell command string to execute in host shell."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 120000,
+            "description": "Optional timeout in milliseconds (default: 30000)."
+          }
+        },
+        "required": ["command"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "list_dir",
+      "description": "Inspect directory structures and file hierarchy safely.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Target directory path."
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Maximum recursive depth to traverse (default: 1)."
+          }
+        },
+        "required": ["path"],
+        "additionalProperties": false
+      }
+    }
+  }
+]

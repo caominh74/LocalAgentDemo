@@ -1,0 +1,15 @@
+{
+  "name": "local-agent-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Comparative demonstration of Naive Agent vs Hardened Agent vs Model Context Protocol (MCP)",
+  "scripts": {
+    "demo:1:server": "bun --cwd 01-basic-agent/server run dev",
+    "demo:1:web": "bun --cwd 01-basic-agent/web run dev",
+    "demo:2:server": "bun --cwd 02-hardened-agent/server run dev",
+    "demo:2:web": "bun --cwd 02-hardened-agent/web run dev",
+    "demo:3:mcp": "bun --cwd 03-mcp-agent/mcp-server run start",
+    "demo:3:server": "bun --cwd 03-mcp-agent/server run dev",
+    "demo:3:web": "bun --cwd 03-mcp-agent/web run dev"
+  }
+}

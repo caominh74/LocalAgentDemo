@@ -1,0 +1,115 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "read",
+      "description": "Read file contents (MCP tool provider).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to read."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Optional 1-indexed line offset."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Optional maximum number of lines."
+          }
+        },
+        "required": ["path"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write",
+      "description": "Write or overwrite file contents (MCP tool provider).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to file to write."
+          },
+          "content": {
+            "type": "string",
+            "description": "Text content to write."
+          }
+        },
+        "required": ["path", "content"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "edit",
+      "description": "Surgical search and replace in file (MCP tool provider).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file."
+          },
+          "oldText": {
+            "type": "string",
+            "description": "Exact text chunk to replace."
+          },
+          "newText": {
+            "type": "string",
+            "description": "Replacement text chunk."
+          }
+        },
+        "required": ["path", "oldText", "newText"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "bash",
+      "description": "Execute shell command via isolated MCP runner (MCP tool provider).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to run."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Command execution timeout in milliseconds."
+          }
+        },
+        "required": ["command"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "list_dir",
+      "description": "Inspect directory tree (MCP tool provider).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to directory."
+          },
+          "depth": {
+            "type": "integer",
+            "description": "Traversal depth limit."
+          }
+        },
+        "required": ["path"]
+      }
+    }
+  }
+]

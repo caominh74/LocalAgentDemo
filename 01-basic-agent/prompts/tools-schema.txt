@@ -1,0 +1,115 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "read",
+      "description": "Read file contents from the workspace filesystem.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative or absolute path to the file."
+          },
+          "offset": {
+            "type": "number",
+            "description": "Optional 1-indexed line offset to start reading from."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Optional maximum number of lines to read."
+          }
+        },
+        "required": ["path"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write",
+      "description": "Write or overwrite content to a file, creating parent directories if needed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to create or overwrite."
+          },
+          "content": {
+            "type": "string",
+            "description": "Text content to write into the file."
+          }
+        },
+        "required": ["path", "content"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "edit",
+      "description": "Perform surgical search-and-replace of an exact string chunk in a file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file to edit."
+          },
+          "oldText": {
+            "type": "string",
+            "description": "Exact text substring to be replaced."
+          },
+          "newText": {
+            "type": "string",
+            "description": "New replacement text substring."
+          }
+        },
+        "required": ["path", "oldText", "newText"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "bash",
+      "description": "Execute a shell command inside the workspace directory.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The command string to execute in shell."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Optional maximum execution time in milliseconds."
+          }
+        },
+        "required": ["command"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "list_dir",
+      "description": "Inspect directory structure and file tree.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the directory to inspect."
+          },
+          "depth": {
+            "type": "number",
+            "description": "Optional maximum recursion depth."
+          }
+        },
+        "required": ["path"]
+      }
+    }
+  }
+]
