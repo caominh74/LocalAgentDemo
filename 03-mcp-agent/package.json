@@ -1,0 +1,13 @@
+{
+  "name": "03-mcp-agent",
+  "private": true,
+  "scripts": {
+    "dev": "bunx mprocs --names \"mcp,server,web\" \"bun run --cwd mcp-server start\" \"bun run --cwd server dev\" \"bun run --cwd web dev\"",
+    "mcp": "bun run --cwd mcp-server start",
+    "server": "bun run --cwd server dev",
+    "web": "bun run --cwd web dev",
+    "demo:3:mcp": "bun run --cwd mcp-server start",
+    "demo:3:server": "bun run --cwd server dev",
+    "demo:3:web": "bun run --cwd web dev"
+  }
+}

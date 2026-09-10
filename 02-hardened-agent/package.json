@@ -1,0 +1,11 @@
+{
+  "name": "02-hardened-agent",
+  "private": true,
+  "scripts": {
+    "dev": "bunx mprocs --names \"server,web\" \"bun run --cwd server dev\" \"bun run --cwd web dev\"",
+    "server": "bun run --cwd server dev",
+    "web": "bun run --cwd web dev",
+    "demo:2:server": "bun run --cwd server dev",
+    "demo:2:web": "bun run --cwd web dev"
+  }
+}

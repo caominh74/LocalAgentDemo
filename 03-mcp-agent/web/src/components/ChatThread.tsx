@@ -1,0 +1,149 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, User, Bot, Cpu, Sparkles } from 'lucide-react';
+import { ChatMessage } from '../types';
+
+interface ChatThreadProps {
+  messages: ChatMessage[];
+  isStreaming: boolean;
+  onSendMessage: (text: string) => void;
+  onSelectPromptPreset: (prompt: string) => void;
+}
+
+export const PRESET_PROMPTS = [
+  {
+    label: 'Test 1: Dynamic Tool Call',
+    prompt: 'Inspect the files in the current directory using list_dir.',
+    desc: 'Autonomous Tier 1 tool executed over stdio JSON-RPC',
+  },
+  {
+    label: 'Test 2: Tier 2 MCP Write',
+    prompt: 'Create a file named demo-mcp.txt with the content "Hello from Model Context Protocol!".',
+    desc: 'Pauses for user approval before mutating via MCP server',
+  },
+  {
+    label: 'Test 3: Tier 3 MCP Shell',
+    prompt: 'Execute a bash command to check the current date and time.',
+    desc: 'High-risk shell execution delegated to isolated MCP process',
+  },
+];
+
+export const ChatThread: React.FC<ChatThreadProps> = ({
+  messages,
+  isStreaming,
+  onSendMessage,
+  onSelectPromptPreset,
+}) => {
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isStreaming]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    onSendMessage(input.trim());
+    setInput('');
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-slate-950">
+      {/* MCP Presets */}
+      <div className="border-b border-slate-800/80 bg-slate-900/30 px-4 py-2">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5">
+          <Sparkles className="h-3 w-3 text-cyan-400" />
+          <span>MCP Protocol Presets:</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PRESET_PROMPTS.map((preset, idx) => (
+            <button
+              key={idx}
+              onClick={() => onSelectPromptPreset(preset.prompt)}
+              className="rounded border border-cyan-500/30 bg-cyan-950/20 hover:bg-cyan-950/40 px-2 py-1 text-[11px] text-cyan-300 transition text-left"
+              title={preset.desc}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Messages Stream */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-center p-6 text-slate-500">
+            <Cpu className="h-10 w-10 text-cyan-600 mb-3" />
+            <p className="text-sm font-medium text-slate-400">MCP Agent Ready</p>
+            <p className="text-xs max-w-sm mt-1 text-slate-500">
+              Submit prompts to observe dynamic JSON-RPC tool discovery and out-of-process tool execution via stdio.
+            </p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex gap-3 text-xs leading-relaxed ${
+                msg.role === 'user' ? 'justify-end' : 'justify-start'
+              }`}
+            >
+              {msg.role === 'assistant' && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                  <Bot className="h-4 w-4" />
+                </div>
+              )}
+
+              <div
+                className={`rounded-lg px-4 py-2.5 max-w-[85%] ${
+                  msg.role === 'user'
+                    ? 'bg-cyan-600 text-white font-normal'
+                    : 'bg-slate-900 border border-slate-800 text-slate-200'
+                }`}
+              >
+                <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
+                <div className="mt-1 text-[10px] text-slate-400 opacity-60 text-right">
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+              </div>
+
+              {msg.role === 'user' && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+          ))
+        )}
+
+        {isStreaming && (
+          <div className="flex gap-3 items-center text-xs text-cyan-400 animate-pulse pl-1">
+            <Bot className="h-4 w-4" />
+            <span>Agent communicating via MCP stdio...</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Box */}
+      <form onSubmit={handleSubmit} className="border-t border-slate-800 p-3 bg-slate-900/40">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type a prompt for the MCP agent..."
+            disabled={isStreaming}
+            className="flex-1 rounded-md bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={isStreaming || !input.trim()}
+            className="flex items-center justify-center rounded-md bg-cyan-500 hover:bg-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950 transition disabled:opacity-50"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};

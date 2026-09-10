@@ -1,0 +1,15 @@
+procs:
+  01-server:
+    shell: "bun run demo:1:server"
+  01-web:
+    shell: "bun run demo:1:web"
+  02-server:
+    shell: "bun run demo:2:server"
+  02-web:
+    shell: "bun run demo:2:web"
+  03-mcp:
+    shell: "bun run demo:3:mcp"
+  03-server:
+    shell: "bun run demo:3:server"
+  03-web:
+    shell: "bun run demo:3:web"
