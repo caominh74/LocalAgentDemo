@@ -12,17 +12,17 @@ interface ChatThreadProps {
 export const PRESET_PROMPTS = [
   {
     label: 'Test 1: Self-Correction Loop',
-    prompt: 'Edit the file package.json and replace the name with my-awesome-app without specifying oldText.',
+    prompt: 'In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.',
     desc: 'Zod validation catches omission, injects feedback, LLM repairs argument',
   },
   {
     label: 'Test 2: Strict Schema Guard',
-    prompt: 'List the contents of the current directory with depth set to "maximum".',
+    prompt: 'Call list_dir on "." and pass the literal string "maximum" as the depth argument.',
     desc: 'Catches string depth and requests integer',
   },
   {
     label: 'Test 3: Tier 3 HITL Bash Gate',
-    prompt: 'Run a shell command to list the directory contents using ls or dir.',
+    prompt: 'Execute a shell command to delete debug.log from the workspace.',
     desc: 'Pauses loop and displays interactive confirmation modal with preview',
   },
 ];

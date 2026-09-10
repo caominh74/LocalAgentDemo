@@ -81,6 +81,7 @@ export class ToolsService {
           cwd: this.workspaceRoot,
           timeout,
           maxBuffer: 1024 * 1024 * 10,
+          shell: process.platform === 'win32' ? 'powershell.exe' : undefined,
         },
         (error, stdout, stderr) => {
           const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');

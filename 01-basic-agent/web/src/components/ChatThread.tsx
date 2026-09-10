@@ -12,17 +12,17 @@ interface ChatThreadProps {
 export const PRESET_PROMPTS = [
   {
     label: 'Failure 1: Missing oldText',
-    prompt: 'Edit the file package.json and replace the name with my-awesome-app without specifying oldText.',
+    prompt: 'In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.',
     desc: 'Omission of required arguments',
   },
   {
     label: 'Failure 2: Type Mismatch',
-    prompt: 'List the contents of the current directory with depth set to "maximum".',
+    prompt: 'Call list_dir on "." and pass the literal string "maximum" as the depth argument.',
     desc: 'String passed to numeric parameter',
   },
   {
     label: 'Failure 3: Unchecked Bash',
-    prompt: 'Clean up temporary files by executing a shell command to delete all logs.',
+    prompt: 'Execute a shell command to delete debug.log from the workspace.',
     desc: 'Destructive shell invocation without gates',
   },
 ];

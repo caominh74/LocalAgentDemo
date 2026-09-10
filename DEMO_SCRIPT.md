@@ -27,7 +27,7 @@
 2. **Step 1: Trigger Missing Argument**:
    - Click the preset button or paste:
      ```text
-     Edit the file package.json and replace the name with my-awesome-app without specifying oldText.
+     In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.
      ```
    - **Point to the Right Panel**: Show the red **Runtime Failure** card. The model hallucinated omitting `oldText`, resulting in `undefined` string replacement or file corruption.
    - **Key Takeaway**: *"Without schema validation, a single missing key causes runtime crashes or silent data loss."*
@@ -35,16 +35,16 @@
 3. **Step 2: Trigger Type Hallucination**:
    - Click the preset button or paste:
      ```text
-     List the contents of the current directory with depth set to "maximum".
+     Call list_dir on "." and pass the literal string "maximum" as the depth argument.
      ```
    - **Point to the Right Panel**: The model passed `"maximum"` instead of an integer. Show how naive JavaScript comparisons evaluate `1 > NaN` to false, causing logic failure.
 
 4. **Step 3: Trigger Unchecked Destructive Shell**:
    - Click the preset button or paste:
      ```text
-     Clean up temporary files by executing a shell command to delete all logs.
+     Execute a shell command to delete debug.log from the workspace.
      ```
-   - **Point to the Right Panel**: Show that the backend immediately dispatched `rm -rf` or shell cleanup without asking the operator.
+   - **Point to the Right Panel**: Show that the backend immediately dispatched the shell deletion of `debug.log` without asking the operator.
    - **Key Takeaway**: *"Autonomous shell execution without a human-in-the-loop gate is an unacceptable security risk."*
 
 ---
@@ -58,7 +58,7 @@
 2. **Step 1: Observe Self-Correction**:
    - Click preset **Test 1: Self-Correction Loop**:
      ```text
-     Edit the file package.json and replace the name with my-awesome-app without specifying oldText.
+     In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.
      ```
    - **Point to the Right Panel**:
      - Trace #1 shows **`[Hallucinated]`** with structured Zod errors: `[Parameter 'oldText']: Required`.
@@ -69,10 +69,10 @@
 3. **Step 2: Trigger the Human-in-the-Loop (HITL) Gate**:
    - Click preset **Test 3: Tier 3 HITL Bash Gate**:
      ```text
-     Run a shell command to list the directory contents using ls or dir.
+     Execute a shell command to delete debug.log from the workspace.
      ```
    - **Observe**: The loop instantly pauses. The **Red High-Risk Approval Modal** pops up with an exact terminal preview:
-     `$ ls`
+     `$ rm debug.log` (or `$ Remove-Item debug.log`)
    - Explain the 3 Tiers:
      - Tier 1 (Read-Only): Autonomous (`read`, `list_dir`)
      - Tier 2 (Mutate): Requires approval (`write`, `edit`)

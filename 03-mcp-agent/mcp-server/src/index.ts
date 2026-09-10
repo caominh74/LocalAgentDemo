@@ -70,6 +70,7 @@ async function toolBash(args: { command: string; timeout?: number }): Promise<st
         cwd: workspaceRoot,
         timeout,
         maxBuffer: 1024 * 1024 * 10,
+        shell: process.platform === 'win32' ? 'powershell.exe' : undefined,
       },
       (error, stdout, stderr) => {
         const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');

@@ -210,4 +210,5 @@ flowchart LR
 | *2026-09-10* | Systems Architect | Workspace Isolation | Added isolated `sandbox/` base directories with pre-seeded `package.json`, `sample.txt`, `README.md`. | Allows users to test presets and drop custom files without risking mutation or corruption of codebase source files. |
 | *2026-09-10* | Systems Architect | Security Guard | Enforced sandbox traversal boundary checks in `resolvePath` for Demo 2 & Demo 3. | Rejects attempts to access files outside the `sandbox/` directory, highlighting defensive agent sandboxing. |
 | *2026-09-10* | Systems Architect | Web UI / Config | Prioritized `data.default*` from `/api/chat/config` in frontend `App.tsx`. | Ensures edits to backend `.env` files immediately propagate to web UI headers upon browser reload. |
+| *2026-09-11* | Systems Architect | Presets & Sandbox Polish | Seeded `debug.log` and `temp.log` in all 3 sandboxes, enabled Windows PowerShell shell option in `tools.service.ts` / `mcp-server`, and refined frontend `PRESET_PROMPTS` for reliable 1.5B/7B local model triggers. | Ensures realistic and reproducible failure/HITL demonstrations on Windows and cross-platform environments. |
 
