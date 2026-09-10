@@ -1,0 +1,3 @@
+Hello from Demo 3 Sandbox!
+This is a sample text file placed here for reading and editing tools.
+Feel free to drop additional test files into this sandbox folder.

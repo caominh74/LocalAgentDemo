@@ -8,14 +8,19 @@ export class ToolsService {
   private workspaceRoot: string;
 
   constructor() {
-    this.workspaceRoot = path.resolve(process.env.WORKSPACE_DIR || path.join(__dirname, '../../../'));
+    this.workspaceRoot = path.resolve(process.env.WORKSPACE_DIR || path.join(__dirname, '../../../sandbox'));
+    if (!fs.existsSync(this.workspaceRoot)) {
+      fs.mkdirSync(this.workspaceRoot, { recursive: true });
+    }
   }
 
   private resolvePath(targetPath: string): string {
-    const resolved = path.isAbsolute(targetPath) ? targetPath : path.resolve(this.workspaceRoot, targetPath);
-    // Security check: ensure path does not escape workspace
-    if (!resolved.startsWith(this.workspaceRoot) && !resolved.includes(path.normalize(this.workspaceRoot))) {
-      // Allow relative paths within demo workspace
+    const resolved = path.isAbsolute(targetPath) ? path.resolve(targetPath) : path.resolve(this.workspaceRoot, targetPath);
+    const normalizedRoot = path.normalize(this.workspaceRoot);
+    const normalizedResolved = path.normalize(resolved);
+    // Security check: ensure path does not escape sandbox workspace
+    if (!normalizedResolved.startsWith(normalizedRoot)) {
+      throw new Error(`Security Violation: Access denied. Path '${targetPath}' is outside the sandbox directory.`);
     }
     return resolved;
   }

@@ -5,10 +5,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 
-const workspaceRoot = path.resolve(process.env.WORKSPACE_DIR || path.join(__dirname, '../../../'));
+const workspaceRoot = path.resolve(process.env.WORKSPACE_DIR || path.join(__dirname, '../../sandbox'));
+if (!fs.existsSync(workspaceRoot)) {
+  fs.mkdirSync(workspaceRoot, { recursive: true });
+}
 
 function resolvePath(targetPath: string): string {
-  return path.isAbsolute(targetPath) ? targetPath : path.resolve(workspaceRoot, targetPath);
+  const resolved = path.isAbsolute(targetPath) ? path.resolve(targetPath) : path.resolve(workspaceRoot, targetPath);
+  const normalizedRoot = path.normalize(workspaceRoot);
+  const normalizedResolved = path.normalize(resolved);
+  if (!normalizedResolved.startsWith(normalizedRoot)) {
+    throw new Error(`Security Violation: Access denied. Path '${targetPath}' is outside the sandbox directory.`);
+  }
+  return resolved;
 }
 
 // 1. read

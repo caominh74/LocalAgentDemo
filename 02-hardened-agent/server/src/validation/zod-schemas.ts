@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToJsonSchema as _zodToJsonSchema } from 'zod-to-json-schema';
+const zodToJsonSchema: (schema: any, options?: any) => any = _zodToJsonSchema;
 
 // 1. read schema
 export const ReadToolSchema = z.object({

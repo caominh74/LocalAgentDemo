@@ -1,0 +1,9 @@
+{
+  "name": "sandbox-app",
+  "version": "1.0.0",
+  "description": "Demo sandbox project for Local Agent testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Running sandbox tests...\""
+  }
+}
