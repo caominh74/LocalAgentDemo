@@ -51,9 +51,9 @@ export class LlmService {
       apiKey?: string;
     }
   ): Promise<any> {
-    const baseUrl = (options?.baseUrl || process.env.LLM_BASE_URL || 'http://localhost:11434/v1').replace(/\/+$/, '');
-    const model = options?.model || process.env.LLM_MODEL || 'llama3.2';
-    const apiKey = options?.apiKey || process.env.LLM_API_KEY || 'ollama';
+    const baseUrl = (options?.baseUrl?.trim() || process.env.LLM_BASE_URL || 'http://localhost:1234/v1').replace(/\/+$/, '');
+    const model = options?.model?.trim() || process.env.LLM_MODEL || 'qwen3.8-4b';
+    const apiKey = options?.apiKey?.trim() || process.env.LLM_API_KEY || 'lm-studio';
 
     const fullMessages: ChatMessage[] = [
       { role: 'system', content: this.systemPrompt },

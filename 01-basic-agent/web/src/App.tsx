@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConfigHeader } from './components/ConfigHeader';
 import { ChatThread } from './components/ChatThread';
 import { ToolExecutionTrace } from './components/ToolExecutionTrace';
 import { ChatMessage, ToolTraceItem, AgentConfig } from './types';
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001').replace(/\/+$/, '');
+
 export function App() {
   const [config, setConfig] = useState<AgentConfig>({
-    baseUrl: 'http://localhost:11434/v1',
-    model: 'llama3.2',
-    apiKey: 'ollama',
+    baseUrl: import.meta.env.VITE_LLM_BASE_URL || '',
+    model: import.meta.env.VITE_LLM_MODEL || '',
+    apiKey: import.meta.env.VITE_LLM_API_KEY || '',
   });
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [traces, setTraces] = useState<ToolTraceItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/config`);
+        if (res.ok) {
+          const data = await res.json();
+          setConfig((prev) => ({
+            baseUrl: prev.baseUrl || data.defaultBaseUrl || '',
+            model: prev.model || data.defaultModel || '',
+            apiKey: prev.apiKey || data.defaultApiKey || '',
+          }));
+        }
+      } catch (e) {
+        // Backend not yet reachable; keep fallback env defaults
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const handleSendMessage = async (text: string) => {
     const userMsg: ChatMessage = {
@@ -34,7 +55,7 @@ export function App() {
     }));
 
     try {
-      const response = await fetch('http://localhost:3001/api/chat/stream', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,7 +166,7 @@ export function App() {
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `⚠️ Network / Connection Error: ${err.message}. Is backend running on port 3001?`,
+          content: `⚠️ Network / Connection Error: ${err.message}. Is backend running at ${API_BASE_URL}?`,
           timestamp: new Date().toISOString(),
         },
       ]);

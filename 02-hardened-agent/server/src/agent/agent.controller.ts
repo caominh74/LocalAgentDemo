@@ -18,9 +18,10 @@ export class AgentController {
       mode: 'hardened',
       systemPrompt: this.llmService.getSystemPrompt(),
       toolsSchema: this.llmService.getToolsSchema(),
-      defaultBaseUrl: process.env.LLM_BASE_URL || 'http://localhost:11434/v1',
-      defaultModel: process.env.LLM_MODEL || 'llama3.2',
-      maxRetries: 2,
+      defaultBaseUrl: process.env.LLM_BASE_URL || 'http://localhost:1234/v1',
+      defaultModel: process.env.LLM_MODEL || 'qwen3.8-4b',
+      defaultApiKey: process.env.LLM_API_KEY || 'lm-studio',
+      maxRetries: Number(process.env.MAX_RETRY_ATTEMPTS) || 2,
     };
   }
 

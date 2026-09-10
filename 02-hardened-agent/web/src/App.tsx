@@ -1,21 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConfigHeader } from './components/ConfigHeader';
 import { ChatThread } from './components/ChatThread';
 import { ToolExecutionTrace } from './components/ToolExecutionTrace';
 import { ApprovalModal } from './components/ApprovalModal';
 import { ChatMessage, ToolTraceItem, AgentConfig, PendingApprovalAction } from './types';
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002').replace(/\/+$/, '');
+
 export function App() {
   const [config, setConfig] = useState<AgentConfig>({
-    baseUrl: 'http://localhost:11434/v1',
-    model: 'llama3.2',
-    apiKey: 'ollama',
+    baseUrl: import.meta.env.VITE_LLM_BASE_URL || '',
+    model: import.meta.env.VITE_LLM_MODEL || '',
+    apiKey: import.meta.env.VITE_LLM_API_KEY || '',
   });
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [traces, setTraces] = useState<ToolTraceItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<PendingApprovalAction | null>(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/config`);
+        if (res.ok) {
+          const data = await res.json();
+          setConfig((prev) => ({
+            baseUrl: prev.baseUrl || data.defaultBaseUrl || '',
+            model: prev.model || data.defaultModel || '',
+            apiKey: prev.apiKey || data.defaultApiKey || '',
+          }));
+        }
+      } catch (e) {
+        // Backend not yet reachable; keep fallback env defaults
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const processSSEStream = async (response: Response) => {
     if (!response.ok || !response.body) {
@@ -170,7 +191,7 @@ export function App() {
     }));
 
     try {
-      const response = await fetch('http://localhost:3002/api/chat/stream', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +208,7 @@ export function App() {
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `⚠️ Network / Connection Error: ${err.message}. Is backend running on port 3002?`,
+          content: `⚠️ Network / Connection Error: ${err.message}. Is backend running at ${API_BASE_URL}?`,
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -203,7 +224,7 @@ export function App() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch('http://localhost:3002/api/chat/action/approve', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/action/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actionId }),
@@ -221,7 +242,7 @@ export function App() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch('http://localhost:3002/api/chat/action/reject', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/action/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actionId, reason }),

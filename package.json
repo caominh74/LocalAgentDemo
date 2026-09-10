@@ -4,6 +4,7 @@
   "private": true,
   "description": "Comparative demonstration of Naive Agent vs Hardened Agent vs Model Context Protocol (MCP)",
   "scripts": {
+    "build": "bun run --cwd 01-basic-agent/server build && bun run --cwd 01-basic-agent/web build && bun run --cwd 02-hardened-agent/server build && bun run --cwd 02-hardened-agent/web build && bun run --cwd 03-mcp-agent/mcp-server build && bun run --cwd 03-mcp-agent/server build && bun run --cwd 03-mcp-agent/web build",
     "dev": "bunx mprocs",
     "demo:all": "bunx mprocs",
     "demo:1": "bunx mprocs --names \"server,web\" \"bun run demo:1:server\" \"bun run demo:1:web\"",
