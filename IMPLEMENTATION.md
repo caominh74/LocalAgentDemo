@@ -15,9 +15,9 @@ CRITICAL OPERATIONAL RULES FOR CODING AGENTS:
 
 | Metric | Current Value | Notes |
 | :--- | :--- | :--- |
-| **Active Milestone** | **Project Complete (All 5 Milestones Finished)** | 100% Build & E2E Verified |
-| **Overall Progress** | `100%` | All 3 agent setups, UI, stdio MCP server, and DEMO_SCRIPT.md complete |
-| **Current Blocker(s)`** | None | Fully runnable and tested on Bun v1.3.14 |
+| **Active Milestone** | **Milestone 6 (Post-M5 Hardening, Sandbox Isolation & Bun ESM Parity)** | 100% Build & E2E Verified |
+| **Overall Progress** | `100%` | All 3 agent setups, UI, stdio MCP server, sandboxes, and DEMO_SCRIPT.md complete |
+| **Current Blocker(s)** | None | Fully runnable and tested on Bun v1.3.14 |
 | **Target LLM Runtime** | Local OpenAI-Compatible | Ollama (`http://localhost:11434/v1`) or vLLM (`http://localhost:8000/v1`) |
 
 ### Active Port Allocation Map
@@ -160,6 +160,36 @@ flowchart LR
 
 ---
 
+### Milestone 6: Runtime Hardening, Express ESM Fix, and Sandbox Isolation
+**Objective**: Fix Bun ESM CommonJS named import incompatibilities, isolate tool executions into dedicated `sandbox/` base directories across all 3 setups, enforce sandbox traversal boundaries, and optimize TypeScript compilation.
+
+- [x] **Task 6.1**: Fix Express named import bug across all 3 backend setups:
+  - Replaced `import { Response } from 'express'` with `import type { Response } from 'express'` across `agent.controller.ts` and `agent.service.ts` in setups 01, 02, and 03.
+  - Resolves `SyntaxError: Export named 'Response' not found in module '...express/index.js'`.
+- [x] **Task 6.2**: Establish isolated `sandbox/` working directories:
+  - Created `01-basic-agent/sandbox/`, `02-hardened-agent/sandbox/`, and `03-mcp-agent/sandbox/`.
+  - Configured `ToolsService` and `mcp-server` to anchor tool execution (`cwd`) and relative file paths to their respective sandbox.
+  - Automatically initialize sandbox directories on boot if missing.
+  - Seeded each sandbox with starter fixtures: `package.json` (supporting live preset testing), `sample.txt`, and `README.md`.
+- [x] **Task 6.3**: Implement sandbox path traversal security guards:
+  - In Demo 2 (`02-hardened-agent`) and Demo 3 (`03-mcp-agent`), updated `resolvePath` to strictly deny and error if any path escapes the sandbox.
+- [x] **Task 6.4**: Fix `zod-to-json-schema` compiler heap exhaustion:
+  - Imported `zodToJsonSchema` as untyped function cast in `02-hardened-agent/server/src/validation/zod-schemas.ts` to prevent TypeScript generic conditional type recursion from causing a 4GB V8 OOM crash during `tsc`.
+- [x] **Task 6.5**: Synchronize frontend config defaults with backend `.env`:
+  - Updated `App.tsx` across all 3 frontends to prioritize `data.defaultModel`, `data.defaultBaseUrl`, and `data.defaultApiKey` from `/api/chat/config` over fallback Vite bundle-time env variables.
+- [x] **Task 6.6**: Verify global build:
+  - Executed root `bun run build` across all 7 projects (3 servers, 3 web apps, 1 mcp-server) with 100% pass and 0 errors.
+
+**Files Touched**:
+- `01-basic-agent/sandbox/*`, `02-hardened-agent/sandbox/*`, `03-mcp-agent/sandbox/*`
+- `01-basic-agent/server/src/agent/*`, `01-basic-agent/server/src/tools/tools.service.ts`
+- `02-hardened-agent/server/src/agent/*`, `02-hardened-agent/server/src/tools/tools.service.ts`, `02-hardened-agent/server/src/validation/zod-schemas.ts`
+- `03-mcp-agent/server/src/agent/*`, `03-mcp-agent/mcp-server/src/index.ts`
+- `01-basic-agent/web/src/App.tsx`, `02-hardened-agent/web/src/App.tsx`, `03-mcp-agent/web/src/App.tsx`
+- `.env` and `.env.example` across setups
+
+---
+
 ## 3. Decision & Deviation Log
 
 | Date | Author / Agent | Component | Decision / Deviation Description | Rationale |
@@ -175,3 +205,9 @@ flowchart LR
 | *2026-09-09* | Systems Architect | TypeScript Optimization | Used `require('zod-to-json-schema')` and disabled `.d.ts` declaration emit in server tsconfig. | Eliminates Node OOM heap crash caused by infinite recursive type resolution in zodToJsonSchema. |
 | *2026-09-09* | Systems Architect | Milestone 4 (MCP Agent) | Built decoupled stdio MCP server exposing 5 tools, NestJS client with dynamic discovery, and UI. | Decouples tools out of backend, enables dynamic discovery via `tools/list`, and isolates execution. |
 | *2026-09-09* | Systems Architect | Milestone 5 (Polish & Guide) | Created `DEMO_SCRIPT.md` (15-min talk track), verified 100% clean builds on all 7 projects. | Repository is fully verified, operational, and prepared for live presentation. |
+| *2026-09-10* | Systems Architect | Bun ESM Parity | Changed Express imports to `import type { Response } from 'express'`. | CommonJS module Express does not export a named runtime `Response`; type-only import prevents Bun ESM runtime crash. |
+| *2026-09-10* | Systems Architect | TypeScript / Zod | Cast `zodToJsonSchema` import to untyped callable `(schema: any, options?: any) => any`. | Prevents TypeScript compiler generic recursion from exceeding the 4GB V8 heap memory limit during `tsc` builds. |
+| *2026-09-10* | Systems Architect | Workspace Isolation | Added isolated `sandbox/` base directories with pre-seeded `package.json`, `sample.txt`, `README.md`. | Allows users to test presets and drop custom files without risking mutation or corruption of codebase source files. |
+| *2026-09-10* | Systems Architect | Security Guard | Enforced sandbox traversal boundary checks in `resolvePath` for Demo 2 & Demo 3. | Rejects attempts to access files outside the `sandbox/` directory, highlighting defensive agent sandboxing. |
+| *2026-09-10* | Systems Architect | Web UI / Config | Prioritized `data.default*` from `/api/chat/config` in frontend `App.tsx`. | Ensures edits to backend `.env` files immediately propagate to web UI headers upon browser reload. |
+

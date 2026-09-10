@@ -26,9 +26,9 @@ export function App() {
         if (res.ok) {
           const data = await res.json();
           setConfig((prev) => ({
-            baseUrl: prev.baseUrl || data.defaultBaseUrl || '',
-            model: prev.model || data.defaultModel || '',
-            apiKey: prev.apiKey || data.defaultApiKey || '',
+            baseUrl: data.defaultBaseUrl || prev.baseUrl || '',
+            model: data.defaultModel || prev.model || '',
+            apiKey: data.defaultApiKey || prev.apiKey || '',
           }));
         }
       } catch (e) {
