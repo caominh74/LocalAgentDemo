@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Res, Get } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { LlmService, ChatMessage } from '../llm/llm.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('api/chat')
 export class AgentController {

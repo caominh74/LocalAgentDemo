@@ -2,7 +2,7 @@ import { Controller, Post, Body, Res, Get } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { LlmService, ChatMessage } from '../llm/llm.service';
 import { McpClientService } from '../mcp/mcp-client.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('api')
 export class AgentController {

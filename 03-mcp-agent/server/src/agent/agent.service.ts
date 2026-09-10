@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { LlmService, ChatMessage } from '../llm/llm.service';
 import { McpClientService } from '../mcp/mcp-client.service';
 import { PermissionGuard, ActionTier } from '../guards/permission.guard';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 export interface PendingActionFrame {
   actionId: string;

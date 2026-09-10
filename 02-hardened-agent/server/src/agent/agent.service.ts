@@ -4,7 +4,7 @@ import { LlmService, ChatMessage } from '../llm/llm.service';
 import { ValidatorService } from '../validation/validator.service';
 import { PermissionGuard, ActionTier } from '../guards/permission.guard';
 import { ToolsService } from '../tools/tools.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 export interface PendingActionFrame {
   actionId: string;

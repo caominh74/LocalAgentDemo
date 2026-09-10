@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LlmService, ChatMessage } from '../llm/llm.service';
 import { ToolsService } from '../tools/tools.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 export interface StreamEvent {
   type: 'TOKEN' | 'TOOL_INVOCATION' | 'TOOL_RESULT' | 'TOOL_ERROR' | 'FINAL_ANSWER' | 'ERROR';
