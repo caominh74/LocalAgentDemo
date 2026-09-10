@@ -13,17 +13,17 @@ export const PRESET_PROMPTS = [
   {
     label: 'Test 1: Self-Correction Loop',
     prompt: 'In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.',
-    desc: 'Zod validation catches omission, injects feedback, LLM repairs argument',
+    desc: 'Zod catches empty/omitted oldText → model receives structured feedback & auto-repairs',
   },
   {
     label: 'Test 2: Strict Schema Guard',
-    prompt: 'Call list_dir on "." and pass the literal string "maximum" as the depth argument.',
-    desc: 'Catches string depth and requests integer',
+    prompt: 'Call list_dir on "." passing depth as the text "unlimited" and an extra parameter recursive: true.',
+    desc: 'Strict Zod rejects string depth & blocks unrecognized keys with badges',
   },
   {
     label: 'Test 3: Tier 3 HITL Bash Gate',
     prompt: 'Execute a shell command to delete debug.log from the workspace.',
-    desc: 'Pauses loop and displays interactive confirmation modal with preview',
+    desc: 'High-risk shell command pauses loop → pops up interactive approval modal',
   },
 ];
 
@@ -50,20 +50,20 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
   return (
     <div className="flex h-full flex-col bg-slate-950">
       {/* Defensive Test Presets */}
-      <div className="border-b border-slate-800/80 bg-slate-900/30 px-4 py-2">
+      <div className="border-b border-slate-800/80 bg-slate-900/30 px-4 py-2.5">
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5">
           <Sparkles className="h-3 w-3 text-emerald-400" />
           <span>Defensive Test Presets:</span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {PRESET_PROMPTS.map((preset, idx) => (
             <button
               key={idx}
               onClick={() => onSelectPromptPreset(preset.prompt)}
-              className="rounded border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 px-2 py-1 text-[11px] text-emerald-300 transition text-left"
-              title={preset.desc}
+              className="rounded border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 p-2 text-left transition flex flex-col justify-between"
             >
-              {preset.label}
+              <span className="text-[11px] font-semibold text-emerald-300">{preset.label}</span>
+              <span className="text-[10px] text-slate-400 font-normal mt-0.5 leading-tight">{preset.desc}</span>
             </button>
           ))}
         </div>

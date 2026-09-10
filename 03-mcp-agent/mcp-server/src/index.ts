@@ -135,7 +135,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            path: { type: 'string', description: 'Relative or absolute file path' },
+            path: { type: 'string', minLength: 1, description: 'Relative path to file within workspace (e.g. "sample.txt", "./package.json")' },
             offset: { type: 'number', description: '1-indexed line offset to start reading from' },
             limit: { type: 'number', description: 'Maximum number of lines to return' },
           },
@@ -148,7 +148,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            path: { type: 'string', description: 'Target file path' },
+            path: { type: 'string', minLength: 1, description: 'Relative target file path within workspace' },
             content: { type: 'string', description: 'Textual content to write' },
           },
           required: ['path', 'content'],
@@ -160,8 +160,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            path: { type: 'string', description: 'Target file path' },
-            oldText: { type: 'string', description: 'Exact text chunk to replace' },
+            path: { type: 'string', minLength: 1, description: 'Relative target file path within workspace (e.g. "./package.json")' },
+            oldText: { type: 'string', minLength: 1, description: 'Exact non-empty text chunk to replace (cannot be empty)' },
             newText: { type: 'string', description: 'Replacement text' },
           },
           required: ['path', 'oldText', 'newText'],
@@ -173,8 +173,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            command: { type: 'string', description: 'Command string to execute in host shell' },
-            timeout: { type: 'number', description: 'Execution timeout in milliseconds' },
+            command: { type: 'string', minLength: 1, description: 'Command string to execute in host shell' },
+            timeout: { type: 'number', description: 'Execution timeout in milliseconds (default 30000)' },
           },
           required: ['command'],
         },
@@ -185,8 +185,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {
-            path: { type: 'string', description: 'Directory path to inspect' },
-            depth: { type: 'number', description: 'Maximum traversal depth' },
+            path: { type: 'string', minLength: 1, description: 'Relative directory path to inspect (defaults to ".")' },
+            depth: { type: 'number', description: 'Maximum traversal depth as an integer between 1 and 10 (do not pass strings)' },
           },
           required: ['path'],
         },

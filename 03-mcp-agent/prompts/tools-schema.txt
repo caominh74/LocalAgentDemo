@@ -3,21 +3,22 @@
     "type": "function",
     "function": {
       "name": "read",
-      "description": "Read file contents (MCP tool provider).",
+      "description": "Read file contents from workspace filesystem (MCP Tool).",
       "parameters": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to the file to read."
+            "minLength": 1,
+            "description": "Relative path to file within workspace (e.g. 'sample.txt', './package.json')."
           },
           "offset": {
             "type": "integer",
-            "description": "Optional 1-indexed line offset."
+            "description": "Optional 1-indexed line offset to start reading from."
           },
           "limit": {
             "type": "integer",
-            "description": "Optional maximum number of lines."
+            "description": "Optional maximum number of lines to return."
           }
         },
         "required": ["path"]
@@ -28,17 +29,18 @@
     "type": "function",
     "function": {
       "name": "write",
-      "description": "Write or overwrite file contents (MCP tool provider).",
+      "description": "Write or overwrite file contents (MCP Tool).",
       "parameters": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to file to write."
+            "minLength": 1,
+            "description": "Relative target file path within workspace."
           },
           "content": {
             "type": "string",
-            "description": "Text content to write."
+            "description": "Textual content to write into the file."
           }
         },
         "required": ["path", "content"]
@@ -49,21 +51,23 @@
     "type": "function",
     "function": {
       "name": "edit",
-      "description": "Surgical search and replace in file (MCP tool provider).",
+      "description": "Surgical search and replace text in file (MCP Tool).",
       "parameters": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to the file."
+            "minLength": 1,
+            "description": "Relative target file path within workspace (e.g. './package.json')."
           },
           "oldText": {
             "type": "string",
-            "description": "Exact text chunk to replace."
+            "minLength": 1,
+            "description": "Exact non-empty text chunk to replace (cannot be empty)."
           },
           "newText": {
             "type": "string",
-            "description": "Replacement text chunk."
+            "description": "New replacement text block."
           }
         },
         "required": ["path", "oldText", "newText"]
@@ -74,17 +78,18 @@
     "type": "function",
     "function": {
       "name": "bash",
-      "description": "Execute shell command via isolated MCP runner (MCP tool provider).",
+      "description": "Execute shell command in workspace (MCP Tool).",
       "parameters": {
         "type": "object",
         "properties": {
           "command": {
             "type": "string",
-            "description": "Shell command to run."
+            "minLength": 1,
+            "description": "Command string to execute in host shell."
           },
           "timeout": {
             "type": "integer",
-            "description": "Command execution timeout in milliseconds."
+            "description": "Execution timeout in milliseconds (default 30000)."
           }
         },
         "required": ["command"]
@@ -95,17 +100,18 @@
     "type": "function",
     "function": {
       "name": "list_dir",
-      "description": "Inspect directory tree (MCP tool provider).",
+      "description": "Inspect directory tree and structure (MCP Tool).",
       "parameters": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to directory."
+            "minLength": 1,
+            "description": "Relative directory path to inspect (defaults to '.')."
           },
           "depth": {
             "type": "integer",
-            "description": "Traversal depth limit."
+            "description": "Maximum traversal depth as an integer between 1 and 10 (do not pass strings)."
           }
         },
         "required": ["path"]

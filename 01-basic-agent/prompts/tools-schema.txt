@@ -9,14 +9,18 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Relative or absolute path to the file."
+            "minLength": 1,
+            "description": "Relative path to the file within the workspace (e.g. 'sample.txt', './package.json')."
           },
           "offset": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 1,
             "description": "Optional 1-indexed line offset to start reading from."
           },
           "limit": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
             "description": "Optional maximum number of lines to read."
           }
         },
@@ -34,7 +38,8 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to the file to create or overwrite."
+            "minLength": 1,
+            "description": "Relative path to the file to create or overwrite."
           },
           "content": {
             "type": "string",
@@ -55,11 +60,13 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to the file to edit."
+            "minLength": 1,
+            "description": "Relative path to the file to edit (e.g. './package.json')."
           },
           "oldText": {
             "type": "string",
-            "description": "Exact text substring to be replaced."
+            "minLength": 1,
+            "description": "Exact non-empty text substring to be replaced. Must contain at least 1 character."
           },
           "newText": {
             "type": "string",
@@ -80,11 +87,14 @@
         "properties": {
           "command": {
             "type": "string",
+            "minLength": 1,
             "description": "The command string to execute in shell."
           },
           "timeout": {
-            "type": "number",
-            "description": "Optional maximum execution time in milliseconds."
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 120000,
+            "description": "Optional maximum execution time in milliseconds (default 30000)."
           }
         },
         "required": ["command"]
@@ -101,11 +111,14 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Path to the directory to inspect."
+            "minLength": 1,
+            "description": "Relative path to the directory to inspect (defaults to '.')."
           },
           "depth": {
-            "type": "number",
-            "description": "Optional maximum recursion depth."
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Maximum recursion depth as an integer between 1 and 10. Do not pass strings like 'maximum'."
           }
         },
         "required": ["path"]

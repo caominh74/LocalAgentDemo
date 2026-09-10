@@ -18,29 +18,31 @@ export interface ChatMessage {
 
 @Injectable()
 export class LlmService {
-  private systemPrompt: string;
-  private toolsSchema: any[];
+  private systemPromptPath: string;
+  private toolsSchemaPath: string;
 
   constructor() {
     const promptsDir = path.resolve(__dirname, '../../../prompts');
-    const systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
-    const toolsSchemaPath = path.join(promptsDir, 'tools-schema.txt');
-
-    this.systemPrompt = fs.existsSync(systemPromptPath)
-      ? fs.readFileSync(systemPromptPath, 'utf-8').trim()
-      : 'You are a helpful coding assistant.';
-
-    this.toolsSchema = fs.existsSync(toolsSchemaPath)
-      ? JSON.parse(fs.readFileSync(toolsSchemaPath, 'utf-8'))
-      : [];
+    this.systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
+    this.toolsSchemaPath = path.join(promptsDir, 'tools-schema.txt');
   }
 
   getSystemPrompt(): string {
-    return this.systemPrompt;
+    if (fs.existsSync(this.systemPromptPath)) {
+      return fs.readFileSync(this.systemPromptPath, 'utf-8').trim();
+    }
+    return 'You are a helpful coding assistant.';
   }
 
   getToolsSchema(): any[] {
-    return this.toolsSchema;
+    if (fs.existsSync(this.toolsSchemaPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(this.toolsSchemaPath, 'utf-8'));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   }
 
   async callChatCompletion(
@@ -56,14 +58,14 @@ export class LlmService {
     const apiKey = options?.apiKey?.trim() || process.env.LLM_API_KEY || 'lm-studio';
 
     const fullMessages: ChatMessage[] = [
-      { role: 'system', content: this.systemPrompt },
+      { role: 'system', content: this.getSystemPrompt() },
       ...messages,
     ];
 
     const body: any = {
       model,
       messages: fullMessages,
-      tools: this.toolsSchema,
+      tools: this.getToolsSchema(),
       tool_choice: 'auto',
       stream: false,
     };

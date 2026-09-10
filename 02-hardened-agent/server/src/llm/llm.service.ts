@@ -19,23 +19,22 @@ export interface ChatMessage {
 
 @Injectable()
 export class LlmService {
-  private systemPrompt: string;
+  private systemPromptPath: string;
   private toolsSchema: any[];
 
   constructor() {
     const promptsDir = path.resolve(__dirname, '../../../prompts');
-    const systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
-
-    this.systemPrompt = fs.existsSync(systemPromptPath)
-      ? fs.readFileSync(systemPromptPath, 'utf-8').trim()
-      : 'You are a defensively guarded coding assistant.';
+    this.systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
 
     // Dynamically derive schemas from strict Zod definitions
     this.toolsSchema = getOpenAIToolDefinitions();
   }
 
   getSystemPrompt(): string {
-    return this.systemPrompt;
+    if (fs.existsSync(this.systemPromptPath)) {
+      return fs.readFileSync(this.systemPromptPath, 'utf-8').trim();
+    }
+    return 'You are a defensively guarded coding assistant.';
   }
 
   getToolsSchema(): any[] {
@@ -55,7 +54,7 @@ export class LlmService {
     const apiKey = options?.apiKey?.trim() || process.env.LLM_API_KEY || 'lm-studio';
 
     const fullMessages: ChatMessage[] = [
-      { role: 'system', content: this.systemPrompt },
+      { role: 'system', content: this.getSystemPrompt() },
       ...messages,
     ];
 

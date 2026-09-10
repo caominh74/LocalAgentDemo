@@ -19,19 +19,18 @@ export interface ChatMessage {
 
 @Injectable()
 export class LlmService {
-  private systemPrompt: string;
+  private systemPromptPath: string;
 
   constructor(private readonly mcpClientService: McpClientService) {
     const promptsDir = path.resolve(__dirname, '../../../prompts');
-    const systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
-
-    this.systemPrompt = fs.existsSync(systemPromptPath)
-      ? fs.readFileSync(systemPromptPath, 'utf-8').trim()
-      : 'You are an AI programming assistant connected to an external Model Context Protocol (MCP) server.';
+    this.systemPromptPath = path.join(promptsDir, 'system-prompt.txt');
   }
 
   getSystemPrompt(): string {
-    return this.systemPrompt;
+    if (fs.existsSync(this.systemPromptPath)) {
+      return fs.readFileSync(this.systemPromptPath, 'utf-8').trim();
+    }
+    return 'You are an AI programming assistant connected to an external Model Context Protocol (MCP) server.';
   }
 
   async callChatCompletion(
@@ -50,7 +49,7 @@ export class LlmService {
     const tools = this.mcpClientService.getOpenAiTools();
 
     const fullMessages: ChatMessage[] = [
-      { role: 'system', content: this.systemPrompt },
+      { role: 'system', content: this.getSystemPrompt() },
       ...messages,
     ];
 

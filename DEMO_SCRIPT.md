@@ -104,6 +104,24 @@
 
 ---
 
+## Testing Presets Matrix & Pedagogical Purpose
+
+This table explains the deliberate engineering purpose of every preset button across the three setups:
+
+| Setup | Preset Label | Prompt Snippet | Pedagogical Purpose / Expected Behavior |
+| :--- | :--- | :--- | :--- |
+| **01 (Naive)** | **Failure 1: Missing `oldText`** | `In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter...` | **Exposes Silent Data Corruption**: Model passes `oldText: ""` to bypass requirement. Naive agent executes `replace("", ...)`, prepending text to index 0 and corrupting `package.json` without throwing any error. |
+| **01 (Naive)** | **Failure 2: Type Mismatch & Extra Keys** | `Call list_dir on "." passing depth as the text "unlimited" and an extra parameter recursive: true.` | **Exposes Unvalidated Types & Hallucinations**: Model passes string to numeric field and invents non-existent keys. Naive agent forwards raw args directly to filesystem calls. |
+| **01 (Naive)** | **Failure 3: Unchecked Destructive Bash** | `Execute a shell command to delete debug.log from the workspace.` | **Exposes Uncontrolled Shell Execution**: Model calls `bash(command="rm ./debug.log")`. Naive agent immediately deletes the file on the host machine without human consent. |
+| **02 (Hardened)** | **Test 1: Self-Correction Loop** | `In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter...` | **Demonstrates Zod & Auto-Repair**: Zod catches `minLength: 1` (`oldText cannot be empty`), feeds structured error back as `role: "tool"`, and the model self-corrects its arguments. |
+| **02 (Hardened)** | **Test 2: Strict Schema Guard** | `Call list_dir on "." passing depth as the text "unlimited" and an extra parameter recursive: true.` | **Demonstrates Strict Schema Enforcement**: Zod `.strict()` blocks unrecognized keys and rejects non-integer depths with visual status badges (`[Hallucinated: recursive]`, `[Invalid Type]`). |
+| **02 (Hardened)** | **Test 3: Tier 3 HITL Bash Gate** | `Execute a shell command to delete debug.log from the workspace.` | **Demonstrates Human-in-the-Loop Safeguard**: Classified as Tier 3 High Risk. Loop immediately pauses, presenting the interactive Red Modal with command preview before any execution. |
+| **03 (MCP)** | **Test 1: Dynamic Tool Call** | `Inspect the files in the current directory using list_dir.` | **Demonstrates MCP Decoupling**: Autonomous Tier 1 tool executed over out-of-process `stdio` JSON-RPC without local backend tool code. |
+| **03 (MCP)** | **Test 2: Tier 2 MCP Write** | `Create a file named demo-mcp.txt with content "Hello from Model Context Protocol!".` | **Demonstrates Pre-RPC HITL Security**: Tier 2 gate halts execution and requests operator approval before transmitting `tools/call` over the MCP transport. |
+| **03 (MCP)** | **Test 3: Tier 3 MCP Shell** | `Execute a bash command to check the current date and time.` | **Demonstrates Protocol-Standard Sandboxing**: High-risk terminal command guarded by preview modal, isolated inside standalone subprocess. |
+
+---
+
 ## Conclusion & Architecture Summary Table
 
 | Capability | Naive Agent (`01`) | Hardened Agent (`02`) | MCP Agent (`03`) |
