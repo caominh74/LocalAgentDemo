@@ -78,6 +78,8 @@ bun run demo:3
 
 ```text
 LocalAgentDemo/
+├── HOW_IT_WORKS.md            # Personal walkthrough of the system (read this to understand)
+├── SLIDES.md                  # Slide source with Mermaid diagrams for the club talk
 ├── AGENTS.md                  # Project Constitution, rules, invariants, coding standards
 ├── IMPLEMENTATION.md          # Self-evolving task ledger, changelog, and decision log
 ├── DEMO_SCRIPT.md             # 15-minute live talk presentation script & talk track
