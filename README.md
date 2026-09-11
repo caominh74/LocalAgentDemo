@@ -36,7 +36,7 @@ Under no circumstances do tool definitions diverge across the 3 setups. All thre
 1. **`read`**: Read workspace file contents (`path`, optional `offset`, optional `limit`).
 2. **`write`**: Write or overwrite file contents, creating parent directories (`path`, `content`).
 3. **`edit`**: Surgical search-and-replace of exact string chunks (`path`, `oldText`, `newText`).
-4. **`bash`**: Execute shell commands inside the workspace (`command`, optional `timeout`).
+4. **`bash`**: Execute a host-shell command inside the workspace (`command`, optional `timeout`). On Windows this is PowerShell; on macOS/Linux this is bash. The tool name stays `bash` so the three demos stay comparable.
 5. **`list_dir`**: Traverse file and directory hierarchies (`path`, optional `depth`).
 
 ---

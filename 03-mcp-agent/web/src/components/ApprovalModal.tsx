@@ -60,10 +60,10 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({ action, onApprove,
           {action.toolName === 'bash' && (
             <div>
               <label className="text-[11px] text-red-400 font-semibold uppercase block mb-1">
-                Command to Execute via MCP Runner:
+                Command to Execute via MCP Runner ({/windows/i.test(navigator.userAgent) ? 'PowerShell' : 'bash'}):
               </label>
               <div className="rounded-lg border border-red-950/80 bg-slate-950 p-3 text-red-300 font-mono text-xs flex items-center gap-2">
-                <span className="text-slate-600 select-none">$</span>
+                <span className="text-slate-600 select-none">{/windows/i.test(navigator.userAgent) ? 'PS>' : '$'}</span>
                 <span className="font-bold">{action.arguments.command}</span>
               </div>
             </div>

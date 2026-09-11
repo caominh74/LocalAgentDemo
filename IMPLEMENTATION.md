@@ -15,7 +15,7 @@ CRITICAL OPERATIONAL RULES FOR CODING AGENTS:
 
 | Metric | Current Value | Notes |
 | :--- | :--- | :--- |
-| **Active Milestone** | **Milestone 8 (UI Modernization)** | Complete on `new-ui`; prior milestones complete |
+| **Active Milestone** | **Milestone 9 (Windows Host Shell)** | Complete on `feat/cross-platform-shell-support` |
 | **Overall Progress** | `100%` | All 3 agent setups, UI, stdio MCP server, sandboxes, presets, and DEMO_SCRIPT.md complete |
 | **Current Blocker(s)** | None | Fully runnable and tested on Bun v1.3.14 |
 | **Target LLM Runtime** | Local OpenAI-Compatible | Ollama (`http://localhost:11434/v1`), vLLM (`http://localhost:8000/v1`), or LM Studio |
@@ -39,6 +39,7 @@ flowchart LR
     M5 --> M6[M6: Sandbox Isolation (DONE)]
     M6 --> M7[M7: Presets & Schemas (DONE)]
     M7 --> M8[M8: UI Modernization (DONE)]
+    M8 --> M9[M9: Windows Host Shell (DONE)]
 ```
 
 ---
@@ -245,6 +246,12 @@ flowchart LR
 - [x] Preserve tool traces, validation feedback, approval/rejection previews, and MCP discovery details.
 - [x] Build affected applications and verify desktop/mobile layouts and key interactions.
 
+### Milestone 9: Windows Host Shell
+
+- [x] Run `bash` in real PowerShell on Windows (`powershell.exe -NoProfile -Command`) instead of Node's `cmd.exe /c` wrapper.
+- [x] Keep the tool named `bash` in all three demos so the five-tool contract stays intact.
+- [x] Add Windows PowerShell scenario cards alongside the existing Unix shell presets.
+- [x] Sync system prompts, tool schemas, HITL previews, and docs with the host-shell behavior.
 
 | Date | Author / Agent | Component | Decision / Deviation Description | Rationale |
 | :--- | :--- | :--- | :--- | :--- |
@@ -271,3 +278,4 @@ flowchart LR
 | *2026-09-11* | Systems Architect | UI Pedagogical Cards | Redesigned preset buttons into card grids with explicit subtitles explaining the test purpose. | Makes testing objectives immediately visible to presenters and audience without relying on mouse hover tooltips. |
 | *2026-09-11* | Systems Architect | Testing & Failure Analysis | Created `TESTING.md` documenting live empirical evaluation with `qwen2.5-1.5b-instruct`. | Formally details silent corruption, gaslighting discrepancies, and phantom actions for peer agent review. |
 | *2026-09-11* | Grok (resume Codex) | Web UI Modernization | Replaced the dense header/preset layout with a shared workspace chrome: demo switcher, collapsible endpoint settings, pedagogical scenario cards, larger composer, and a hideable execution trace. Added per-demo accent themes (amber/emerald/cyan) via a duplicated `index.css` because the three apps stay independently packaged. | Live-talk UI was hard to read (tiny type, competing controls). Codex had rewritten the TSX on `new-ui` but crashed before the stylesheet landed; this session finished the CSS, restored original preset copy, and verified desktop/mobile interactions. |
+| *2026-09-11* | Grok | Windows Host Shell | Kept the 5-tool contract (`bash` still named `bash`) but spawn `powershell.exe -NoProfile -Command` on Windows instead of Node's `cmd.exe /c` wrapper. Added a 4th Windows PowerShell scenario card in each demo. | Node `exec({ shell: 'powershell.exe' })` still passes `/d /s /c`, so Unix and PowerShell commands both failed on Windows. A 6th `powershell` tool would break demo comparison. |

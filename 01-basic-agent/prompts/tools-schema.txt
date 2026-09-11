@@ -81,14 +81,14 @@
     "type": "function",
     "function": {
       "name": "bash",
-      "description": "Execute a shell command inside the workspace directory.",
+      "description": "Execute a command in the host shell (PowerShell on Windows, bash on macOS/Linux). On Windows prefer PowerShell cmdlets such as Remove-Item and Get-Date.",
       "parameters": {
         "type": "object",
         "properties": {
           "command": {
             "type": "string",
             "minLength": 1,
-            "description": "The command string to execute in shell."
+            "description": "Command string for the host shell (PowerShell on Windows, bash on macOS/Linux)."
           },
           "timeout": {
             "type": "integer",

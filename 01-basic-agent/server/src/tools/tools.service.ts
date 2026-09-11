@@ -1,7 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
+
+function runHostShell(command: string, cwd: string, timeout: number): Promise<string> {
+  const isWin = process.platform === 'win32';
+  const file = isWin ? 'powershell.exe' : fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh';
+  const cliArgs = isWin
+    ? ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', command]
+    : ['-c', command];
+  const shellName = isWin ? 'powershell' : 'bash';
+
+  return new Promise((resolve) => {
+    execFile(
+      file,
+      cliArgs,
+      { cwd, timeout, maxBuffer: 1024 * 1024 * 10, windowsHide: true },
+      (error, stdout, stderr) => {
+        const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
+        const header = `[host shell: ${shellName}]`;
+        if (error) {
+          resolve(`${header}\n[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
+        } else {
+          resolve(`${header}\n${output || '(command completed with empty output)'}`);
+        }
+      },
+    );
+  });
+}
 
 @Injectable()
 export class ToolsService {
@@ -70,29 +96,11 @@ export class ToolsService {
     return `Successfully replaced text chunk in ${args.path}`;
   }
 
-  // 4. bash: Execute shell command
+  // 4. bash: Execute a command in the host shell (PowerShell on Windows, bash on Unix)
   async bash(args: any): Promise<string> {
-    // Naive execution: directly runs shell command without confirmation
+    // Naive execution: directly runs the host shell command without confirmation
     const timeout = args.timeout ? Number(args.timeout) : 30000;
-    return new Promise((resolve, reject) => {
-      exec(
-        args.command,
-        {
-          cwd: this.workspaceRoot,
-          timeout,
-          maxBuffer: 1024 * 1024 * 10,
-          shell: process.platform === 'win32' ? 'powershell.exe' : undefined,
-        },
-        (error, stdout, stderr) => {
-          const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
-          if (error) {
-            resolve(`[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
-          } else {
-            resolve(output || '(command completed with empty output)');
-          }
-        }
-      );
-    });
+    return runHostShell(String(args.command ?? ''), this.workspaceRoot, timeout);
   }
 
   // 5. list_dir: Inspect directory structure

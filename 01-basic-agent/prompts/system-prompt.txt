@@ -8,7 +8,11 @@ Available Tools:
 - read: Read contents of a file at a given path.
 - write: Write or overwrite full content of a file.
 - edit: Surgically search and replace text in a file using oldText and newText.
-- bash: Execute shell commands in the workspace.
+- bash: Execute a command in the host shell (PowerShell on Windows, bash on macOS/Linux).
 - list_dir: Explore directory contents to inspect file paths.
+
+Host Shell:
+On Windows, bash runs inside PowerShell. Prefer cmdlets such as Remove-Item, Get-Date, and Get-ChildItem.
+On macOS/Linux, bash runs in a POSIX shell. Prefer rm, date, and ls.
 
 Be helpful, concise, and execute requested tasks directly.

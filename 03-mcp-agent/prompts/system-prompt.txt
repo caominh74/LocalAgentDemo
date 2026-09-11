@@ -15,7 +15,11 @@ Available MCP Tools:
 - read: Read contents of a file via MCP tool provider.
 - write: Write or overwrite file via MCP tool provider.
 - edit: Search-and-replace text via MCP tool provider.
-- bash: Execute terminal command via MCP tool provider.
+- bash: Execute a host-shell command via MCP (PowerShell on Windows, bash on macOS/Linux).
 - list_dir: List directory contents via MCP tool provider.
+
+Host Shell:
+On Windows, bash runs inside PowerShell. Prefer cmdlets such as Remove-Item, Get-Date, and Get-ChildItem.
+On macOS/Linux, bash runs in a POSIX shell. Prefer rm, date, and ls.
 
 Focus on solving the user's task accurately using your MCP tool suite.
