@@ -49,7 +49,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
               className={`trace-card rounded-lg border p-3 transition ${
                 trace.status === 'circuit_breaker'
                   ? 'border-purple-800 bg-purple-950/20'
-                  : trace.status === 'hallucinated' || trace.status === 'error'
+                  : trace.status === 'hallucinated' || trace.status === 'error' || trace.status === 'rejected'
                   ? 'border-rose-900/70 bg-rose-950/20'
                   : trace.status === 'waiting_approval'
                   ? 'border-amber-700/80 bg-amber-950/20'
@@ -69,6 +69,12 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                     <span className="inline-flex items-center gap-1 rounded bg-amber-950/80 border border-amber-600 px-2 py-0.5 text-[10px] font-bold text-amber-300">
                       <ShieldAlert className="h-3 w-3" />
                       HITL Approval Required
+                    </span>
+                  )}
+                  {trace.status === 'rejected' && (
+                    <span className="inline-flex items-center gap-1 rounded bg-rose-950/80 border border-rose-600 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+                      <ShieldAlert className="h-3 w-3" />
+                      Operator Denied
                     </span>
                   )}
                 </div>

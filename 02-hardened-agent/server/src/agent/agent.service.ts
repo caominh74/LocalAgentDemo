@@ -250,21 +250,28 @@ export class AgentService {
     this.pendingActions.delete(actionId);
 
     if (!approved) {
-      // User rejected the action
+      const blocked =
+        frame.toolName === 'bash'
+          ? String(frame.validatedArgs?.command ?? '')
+          : JSON.stringify(frame.validatedArgs);
+      const denialReason = reason || 'User declined approval.';
+      const content =
+        `Operator denied this ${frame.toolName} command. It was NOT executed, so no files were changed.\n\n` +
+        `Blocked command: ${blocked}\n` +
+        `Reason: ${denialReason}`;
+
       this.sendSSE(res, 'ACTION_REJECTED', {
         actionId,
+        toolCallId: frame.toolCallId,
         toolName: frame.toolName,
-        reason: reason || 'Action was denied by user operator.',
+        reason: denialReason,
+        command: blocked,
       });
 
-      frame.conversation.push({
-        role: 'tool',
-        tool_call_id: frame.toolCallId,
-        content: `Execution Denied: The user rejected the execution of ${frame.toolName}. Reason: ${reason || 'User declined approval.'}`,
-      });
-
-      // Resume loop with rejection recorded
-      await this.runAgentLoop(frame.conversation, res, frame.options);
+      // Do not ask the model to summarize a denial. Small local models treat
+      // "delete debug.log" as a completed story and claim success anyway.
+      this.sendSSE(res, 'FINAL_ANSWER', { content });
+      res.end();
       return;
     }
 

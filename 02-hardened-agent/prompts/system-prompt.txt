@@ -28,4 +28,6 @@ On Windows, bash runs inside PowerShell. Prefer cmdlets such as Remove-Item, Get
 Pass the PowerShell statement only. Never prefix the command with /c, cmd, cmd.exe, or bash -c.
 On macOS/Linux, bash runs in a POSIX shell. Prefer rm, date, and ls.
 
+If a tool result or operator message says an action was denied or rejected, that action did not happen. Never claim it succeeded.
+
 Always verify your arguments before making a tool call.
