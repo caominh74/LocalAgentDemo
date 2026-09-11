@@ -217,8 +217,13 @@ flowchart LR
   - Added the comprehensive "Testing Presets Matrix & Pedagogical Purpose" table comparing expected behavior across Demo 1, Demo 2, and Demo 3.
 - [x] **Task 7.8**: Monorepo build verification:
   - Executed root `bun run build` with 100% pass across all 7 projects.
+- [x] **Task 7.9**: Empirical testing report and failure mode analysis (`TESTING.md`):
+  - Created `TESTING.md` documenting live empirical evaluation with `qwen2.5-1.5b-instruct`.
+  - Analyzed 3 critical failure modes: Silent Data Corruption (`edit`), Hallucinated Argument Discrepancy / Gaslighting (`list_dir`), and Phantom Execution (`bash`).
+  - Added architectural comparison table and preset tuning recommendations for peer agent review.
 
 **Files Touched**:
+- `TESTING.md`
 - `01-basic-agent/sandbox/debug.log`, `01-basic-agent/sandbox/temp.log`, `01-basic-agent/sandbox/package.json`
 - `02-hardened-agent/sandbox/debug.log`, `02-hardened-agent/sandbox/temp.log`
 - `03-mcp-agent/sandbox/debug.log`, `03-mcp-agent/sandbox/temp.log`
@@ -256,4 +261,5 @@ flowchart LR
 | *2026-09-11* | Systems Architect | Conversational Guardrails | Added explicit tool invocation policy ("respond with text on greetings") and path discipline to system prompts. | Prevents small 1.5B models from suffering from tool hyperactivity (e.g. attempting to write `/tmp/test.txt` when user says "hi"). |
 | *2026-09-11* | Systems Architect | Schema Strictness | Added `.strict()` to `ListDirToolSchema` and chained `.describe()` across all Zod tool properties. | Rejects extra hallucinated keys (e.g. `recursive: true`) and generates complete OpenAPI descriptions for the model. |
 | *2026-09-11* | Systems Architect | UI Pedagogical Cards | Redesigned preset buttons into card grids with explicit subtitles explaining the test purpose. | Makes testing objectives immediately visible to presenters and audience without relying on mouse hover tooltips. |
+| *2026-09-11* | Systems Architect | Testing & Failure Analysis | Created `TESTING.md` documenting live empirical evaluation with `qwen2.5-1.5b-instruct`. | Formally details silent corruption, gaslighting discrepancies, and phantom actions for peer agent review. |
 
