@@ -25,7 +25,7 @@ export class AgentService {
     options?: { baseUrl?: string; model?: string; apiKey?: string }
   ): Promise<void> {
     const conversation: ChatMessage[] = [...messages];
-    const maxIterations = 5;
+    const maxIterations = 8;
     let iteration = 0;
 
     try {

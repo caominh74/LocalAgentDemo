@@ -85,23 +85,29 @@ LocalAgentDemo/
 ├── package.json               # Root orchestrator scripts
 │
 ├── 01-basic-agent/            # Demo 1: The Naive Agent
+│   ├── .env.example           # One env file per demo (copy to .env)
 │   ├── prompts/               # Plain-text prompt and tools-schema assets
+│   ├── sandbox/               # Isolated tool workspace
 │   ├── server/                # NestJS API (Port 3001)
 │   ├── web/                   # React UI (Port 5173)
-│   └── README.md              # 3 reproducible failure prompts documented
+│   └── README.md              # Scenario cards: failures, Windows shell, multi-step loop
 │
 ├── 02-hardened-agent/         # Demo 2: The Hardened Agent
+│   ├── .env.example           # One env file per demo (copy to .env)
 │   ├── prompts/               # Hardened prompt and Zod schema exports
+│   ├── sandbox/               # Isolated tool workspace
 │   ├── server/                # NestJS API with Zod & HITL Guard (Port 3002)
 │   ├── web/                   # React UI with validation badges & approval modal (Port 5174)
-│   └── README.md              # Defensive architecture & HITL walkthrough
+│   └── README.md              # Zod, circuit breaker, HITL, multi-step loop
 │
 └── 03-mcp-agent/              # Demo 3: The Model Context Protocol (MCP) Agent
+    ├── .env.example           # One env file per demo (copy to .env)
     ├── prompts/               # Prompt and exported MCP tool schemas
+    ├── sandbox/               # Isolated tool workspace
     ├── mcp-server/            # Standalone stdio MCP Server exposing the 5 tools
     ├── server/                # NestJS API with MCP Client SDK (Port 3003)
     ├── web/                   # React UI with MCP status badge & RPC telemetry (Port 5175)
-    └── README.md              # MCP decoupling & protocol guide
+    └── README.md              # MCP decoupling, HITL-before-RPC, multi-step loop
 ```
 
 ---

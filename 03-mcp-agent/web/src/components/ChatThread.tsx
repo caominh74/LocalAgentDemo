@@ -35,6 +35,13 @@ export const PRESET_PROMPTS = [
     tool: 'bash',
     os: 'windows',
   },
+  {
+    label: 'Loop: Multi-step briefing',
+    prompt:
+      'Complete this as a multi-step agent task. Call exactly one tool per turn. Do not skip steps. Do not use bash. Do not delete any files.\n\n1. Call list_dir on path "." to list the sandbox.\n2. Call read on path "./sample.txt".\n3. Call read on path "./package.json".\n4. Call write to create "./briefing.txt" containing exactly two lines:\nsample: <the first line of sample.txt>\npackage: <the name field from package.json>\n5. Stop calling tools. Reply with a short final answer that quotes both lines you wrote.',
+    desc: 'Same 4-step loop over MCP stdio; write is gated before tools/call',
+    tool: '4-step',
+  },
 ];
 
 export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromptPreset }: ChatThreadProps) {

@@ -1,55 +1,95 @@
-# Demo 3: The Model Context Protocol (MCP) Agent (`03-mcp-agent`)
+# Demo 3: The MCP Agent (`03-mcp-agent`)
 
-This setup demonstrates **decoupling all tool execution logic completely out of the backend** into a standalone Model Context Protocol (MCP) server communicating over `stdio`.
+Same five tools, same HITL gate as Demo 2, but **tool implementations do not live in Nest**. They run in a standalone MCP server over `stdio`. The backend discovers schemas with `tools/list` and invokes them with `tools/call`.
 
-## Architecture & Benefits Over Demos 1 and 2
+MCP is **packaging and discovery**, not a third validator. There is no Zod self-correction loop here (that is Demo 2). JSON parse errors and MCP execution errors still go back into the agent loop as tool messages.
 
-1. **Protocol Decoupling**:
-   - Zero tool implementation logic exists in the NestJS backend (`03-mcp-agent/server/`).
-   - All 5 tools (`read`, `write`, `edit`, `bash`, `list_dir`) are implemented and executed exclusively inside `03-mcp-agent/mcp-server/`.
-
-2. **Dynamic Capability Discovery**:
-   - The backend does not hardcode tool schemas.
-   - On startup or connection, the backend queries `client.listTools()` via JSON-RPC, dynamically receives the tool definitions and JSON schemas, and converts them into OpenAI function calling parameters.
-   - If tools are added, updated, or removed in `mcp-server`, the agent automatically adapts without modifying backend code.
-
-3. **Process Sandboxing & Fault Isolation**:
-   - The tool server runs as an independent child process (`bun run ../mcp-server/src/index.ts`).
-   - If a heavy shell script or memory leak crashes the tool server, the backend catches the stdio process exit without taking down the web server or client sessions.
-
-4. **Retained Permission Governance**:
-   - The backend enforces the 3-Tier Permission Guard (`TIER_1_SAFE`, `TIER_2_MUTATE`, `TIER_3_HIGH_RISK`) before forwarding `tools/call` requests over the stdio transport.
+| | |
+| :--- | :--- |
+| Backend | `http://localhost:3003` |
+| Web UI | `http://localhost:5175` |
+| MCP server | `stdio` child process (`03-mcp-agent/mcp-server`) |
+| Sandbox | `03-mcp-agent/sandbox/` |
+| Env | **One file:** `03-mcp-agent/.env` (copy from `.env.example`) |
 
 ---
 
-## Live Demo Test Walkthrough
+## Architecture
 
-- **Inspect Dynamic Discovery**:
-  Observe the **`[MCP stdio: CONNECTED]`** badge in the header. Click the badge to view the live JSON-RPC handshake telemetry and the 5 dynamically discovered tool schemas.
-- **Preset 1 (Dynamic Tool Call)**:
-  Submit `Inspect files using list_dir`.
-  - *Observe*: The backend dispatches `tools/call` over stdio; result returns via JSON-RPC.
-- **Preset 2 (Tier 2 MCP Write)**:
-  Submit `Create demo-mcp.txt with Hello MCP`.
-  - *Observe*: The backend halts the loop and triggers the interactive HITL Approval Modal. Once approved, the write is executed by the MCP server process.
-- **Preset 3 (Tier 3 MCP Shell)**:
-  Submit `Execute bash to check date`.
-  - *Observe*: Red high-risk alert modal displays exact command preview.
+1. **No tool bodies in Nest.** `read` / `write` / `edit` / `bash` / `list_dir` are implemented only in `mcp-server/src/index.ts`.
+2. **Dynamic discovery.** On connect, the client calls `tools/list`, converts MCP `inputSchema` into OpenAI function tools, and shows the count on the header badge.
+3. **HITL is still in the backend.** The 3-tier guard runs **before** `tools/call` is sent over stdio. Reject never reaches the MCP process.
+4. **Fault isolation.** A crashing tool process should not take down the Nest API. The badge shows connected / disconnected.
+
+---
+
+## UI scenario cards
+
+### Test 1: Dynamic tool call
+
+```text
+Inspect the files in the current directory using list_dir.
+```
+
+Tier 1: autonomous `list_dir` over JSON-RPC. Point at the MCP badge (`5 tools discovered`) and the RPC drawer (`tools/list`, `tools/call`).
+
+### Test 2: Tier 2 MCP write
+
+```text
+Create a file named demo-mcp.txt with the content "Hello from Model Context Protocol!".
+```
+
+HITL intercepts `write` **before** the RPC. Approve → `tools/call` in the isolated process.
+
+### Test 3: Tier 3 MCP shell
+
+```text
+Execute a bash command to check the current date and time.
+```
+
+Red modal with command preview, then `bash` runs inside the MCP server (PowerShell on Windows, bash on Unix).
+
+### Test 4: Tier 3 MCP PowerShell (Windows)
+
+```text
+Call the bash tool and set command to exactly Get-Date with no cmd, /c, or date prefix.
+```
+
+Same gate, explicit `Get-Date`. Tool name remains `bash`.
+
+### Loop: Multi-step briefing
+
+```text
+Complete this as a multi-step agent task. Call exactly one tool per turn. Do not skip steps. Do not use bash. Do not delete any files.
+
+1. Call list_dir on path "." to list the sandbox.
+2. Call read on path "./sample.txt".
+3. Call read on path "./package.json".
+4. Call write to create "./briefing.txt" containing exactly two lines:
+sample: <the first line of sample.txt>
+package: <the name field from package.json>
+5. Stop calling tools. Reply with a short final answer that quotes both lines you wrote.
+```
+
+**Talk beat:** same four tool rounds as Demos 1 and 2, but each call is an MCP RPC. Steps 1–3 are autonomous. Step 4 pauses at HITL; after Approve, Nest dispatches `tools/call` and the loop continues to the final answer. Use the RPC drawer to show `list_dir` / `read` / `write` as separate JSON-RPC turns.
 
 ---
 
 ## Running Demo 3
 
 ```bash
-# From repository root
-bun run demo:3:mcp
-bun run demo:3:server
-bun run demo:3:web
+cp 03-mcp-agent/.env.example 03-mcp-agent/.env
+# edit LLM_BASE_URL / LLM_MODEL if needed
 
-# Or open interactive TUI tabs
 bun run demo:3
 ```
 
-- Backend API: `http://localhost:3003`
-- Web UI: `http://localhost:5175`
-- MCP Server: Standard I/O child process (`stdio`)
+Or split:
+
+```bash
+bun run demo:3:mcp
+bun run demo:3:server
+bun run demo:3:web
+```
+
+The Nest process also spawns `mcp-server` over stdio on boot. One `.env` at the demo root feeds Nest, Vite, and the MCP child (`bun --env-file=../.env`).
