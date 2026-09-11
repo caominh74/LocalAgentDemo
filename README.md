@@ -45,10 +45,14 @@ Under no circumstances do tool definitions diverge across the 3 setups. All thre
 
 ### Prerequisites
 - **[Bun](https://bun.sh)** installed (v1.3+). *Note: npm/yarn/pnpm are prohibited.*
-- **Ollama** or **vLLM** running locally:
+- **Ollama**, **vLLM**, or **LM Studio** running locally.
+- Each demo has **one** env file at the demo root. Copy the example if you do not have it yet:
   ```bash
-  ollama run llama3.2
+  cp 01-basic-agent/.env.example 01-basic-agent/.env
+  cp 02-hardened-agent/.env.example 02-hardened-agent/.env
+  cp 03-mcp-agent/.env.example 03-mcp-agent/.env
   ```
+  Edit `LLM_BASE_URL` / `LLM_MODEL` in that file (LM Studio default is `http://localhost:1234/v1`). The same file feeds the Nest server and the Vite app.
 
 ### 1. Launch Everything with the Tabbed TUI (`mprocs`)
 To run all 7 services across all 3 demos simultaneously in a single terminal with switchable tabs:
