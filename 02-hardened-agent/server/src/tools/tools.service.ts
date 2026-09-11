@@ -1,7 +1,75 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
+
+function psQuote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function unwrapShellWrappers(raw: string): string {
+  let cmd = raw.trim();
+  const cmdWrapper = /^(?:cmd(?:\.exe)?\s+)?(?:\/d\s+)?(?:\/s\s+)?(?:\/c\s+)/i;
+  const psWrapper = /^powershell(?:\.exe)?(?:\s+-\w+(?:\s+\S+)?)+\s+(?:-command|-c)\s+/i;
+  const bashWrapper = /^(?:\/bin\/)?bash(?:\.exe)?\s+-c\s+/i;
+  for (let i = 0; i < 4; i++) {
+    const next = cmd
+      .replace(cmdWrapper, '')
+      .replace(psWrapper, '')
+      .replace(bashWrapper, '')
+      .trim()
+      .replace(/^["'](.+)["']$/s, '$1')
+      .trim();
+    if (next === cmd) break;
+    cmd = next;
+  }
+  return cmd;
+}
+
+function toPowerShellCommand(command: string): string {
+  const cmd = unwrapShellWrappers(command);
+  if (/^rm(\s|$)/.test(cmd)) {
+    const recursive = /(^|\s)-{1,2}[a-zA-Z]*r[a-zA-Z]*\b/i.test(cmd);
+    const target = cmd.replace(/^rm\s+/, '').replace(/(?:^|\s)--?\w+/g, ' ').trim();
+    if (target) {
+      return recursive
+        ? `Remove-Item -Recurse -Force -LiteralPath ${psQuote(target)}`
+        : `Remove-Item -Force -LiteralPath ${psQuote(target)}`;
+    }
+  }
+  if (/^date\s*$/i.test(cmd)) {
+    return 'Get-Date';
+  }
+  return cmd;
+}
+
+function runHostShell(command: string, cwd: string, timeout: number): Promise<string> {
+  const isWin = process.platform === 'win32';
+  const file = isWin ? 'powershell.exe' : fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh';
+  const resolved = isWin ? toPowerShellCommand(command) : unwrapShellWrappers(command);
+  const cliArgs = isWin
+    ? ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', resolved]
+    : ['-c', resolved];
+  const shellName = isWin ? 'powershell' : 'bash';
+  const rewriteNote = resolved !== command.trim() ? `[normalized command: ${resolved}]\n` : '';
+
+  return new Promise((resolve) => {
+    execFile(
+      file,
+      cliArgs,
+      { cwd, timeout, maxBuffer: 1024 * 1024 * 10, windowsHide: true },
+      (error, stdout, stderr) => {
+        const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
+        const header = `[host shell: ${shellName}]\n${rewriteNote}`;
+        if (error) {
+          resolve(`${header}[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
+        } else {
+          resolve(`${header}${output || '(command completed with empty output)'}`);
+        }
+      },
+    );
+  });
+}
 
 @Injectable()
 export class ToolsService {
@@ -69,26 +137,7 @@ export class ToolsService {
   }
 
   async bash(args: { command: string; timeout?: number }): Promise<string> {
-    const timeout = args.timeout || 30000;
-    return new Promise((resolve) => {
-      exec(
-        args.command,
-        {
-          cwd: this.workspaceRoot,
-          timeout,
-          maxBuffer: 1024 * 1024 * 10,
-          shell: process.platform === 'win32' ? 'powershell.exe' : undefined,
-        },
-        (error, stdout, stderr) => {
-          const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
-          if (error) {
-            resolve(`[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
-          } else {
-            resolve(output || '(command completed with empty output)');
-          }
-        }
-      );
-    });
+    return runHostShell(args.command, this.workspaceRoot, args.timeout || 30000);
   }
 
   async list_dir(args: { path?: string; depth?: number }): Promise<string> {

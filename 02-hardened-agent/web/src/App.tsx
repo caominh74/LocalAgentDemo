@@ -141,6 +141,14 @@ export function App() {
                 timestamp: new Date().toISOString(),
               },
             ]);
+          } else if (event.type === 'ACTION_REJECTED') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.toolCallId === event.data.toolCallId
+                  ? { ...t, status: 'rejected', error: event.data.reason, validationBadge: 'Denied' }
+                  : t
+              )
+            );
           } else if (event.type === 'TOOL_RESULT') {
             setTraces((prev) =>
               prev.map((t) =>

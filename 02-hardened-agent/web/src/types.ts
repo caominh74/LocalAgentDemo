@@ -1,4 +1,4 @@
-export type ValidationBadgeType = 'Passed' | 'Hallucinated' | 'Correcting' | 'Circuit Breaker';
+export type ValidationBadgeType = 'Passed' | 'Hallucinated' | 'Correcting' | 'Circuit Breaker' | 'Denied';
 
 export interface ChatMessage {
   id: string;

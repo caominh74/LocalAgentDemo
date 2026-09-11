@@ -78,14 +78,14 @@
     "type": "function",
     "function": {
       "name": "bash",
-      "description": "Execute shell command in workspace (MCP Tool).",
+      "description": "Execute a command in the host shell via MCP (PowerShell on Windows, bash on macOS/Linux). On Windows prefer PowerShell cmdlets such as Remove-Item and Get-Date.",
       "parameters": {
         "type": "object",
         "properties": {
           "command": {
             "type": "string",
             "minLength": 1,
-            "description": "Command string to execute in host shell."
+            "description": "Command string for the host shell (PowerShell on Windows, bash on macOS/Linux)."
           },
           "timeout": {
             "type": "integer",

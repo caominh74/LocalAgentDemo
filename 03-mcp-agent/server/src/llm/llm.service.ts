@@ -27,10 +27,14 @@ export class LlmService {
   }
 
   getSystemPrompt(): string {
-    if (fs.existsSync(this.systemPromptPath)) {
-      return fs.readFileSync(this.systemPromptPath, 'utf-8').trim();
-    }
-    return 'You are an AI programming assistant connected to an external Model Context Protocol (MCP) server.';
+    const base = fs.existsSync(this.systemPromptPath)
+      ? fs.readFileSync(this.systemPromptPath, 'utf-8').trim()
+      : 'You are an AI programming assistant connected to an external Model Context Protocol (MCP) server.';
+    const host =
+      process.platform === 'win32'
+        ? 'Host environment: Windows. The bash tool executes in PowerShell. Prefer PowerShell cmdlets such as Remove-Item, Get-Date, and Get-ChildItem. Never prefix the command with /c, cmd, or cmd.exe.'
+        : 'Host environment: Unix. The bash tool executes in bash. Prefer POSIX commands such as rm, date, and ls.';
+    return `${base}\n\n${host}`;
   }
 
   async callChatCompletion(

@@ -28,6 +28,13 @@ export const PRESET_PROMPTS = [
     desc: 'High-risk shell execution with preview delegated to isolated MCP process',
     tool: 'bash',
   },
+  {
+    label: 'Test 4: Tier 3 MCP PowerShell (Windows)',
+    prompt: 'Call the bash tool and set command to exactly Get-Date with no cmd, /c, or date prefix.',
+    desc: 'Windows host: Get-Date runs in PowerShell after MCP approval',
+    tool: 'bash',
+    os: 'windows',
+  },
 ];
 
 export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromptPreset }: ChatThreadProps) {
@@ -59,7 +66,7 @@ export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromp
           <span>
             <FlaskConical size={15} />
             Try a scenario
-            <span className="count-badge">03</span>
+            <span className="count-badge">{String(PRESET_PROMPTS.length).padStart(2, '0')}</span>
           </span>
           <ChevronDown size={16} className={showPresets ? 'rotate-180' : ''} />
         </button>
@@ -68,7 +75,7 @@ export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromp
             {PRESET_PROMPTS.map((preset, idx) => (
               <button
                 key={preset.label}
-                className="scenario-card"
+                className={preset.os === 'windows' ? 'scenario-card scenario-card-windows' : 'scenario-card'}
                 disabled={isStreaming}
                 title={preset.prompt}
                 onClick={() => {
@@ -78,6 +85,7 @@ export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromp
                 <div className="scenario-meta">
                   <span>0{idx + 1}</span>
                   <code>{preset.tool}</code>
+                  {preset.os === 'windows' && <span className="scenario-os">Windows</span>}
                   <ArrowUpRight size={15} />
                 </div>
                 <strong>{preset.label}</strong>

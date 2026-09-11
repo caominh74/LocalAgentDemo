@@ -36,6 +36,13 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({ badge }) => {
           Circuit Breaker
         </span>
       );
+    case 'Denied':
+      return (
+        <span className="inline-flex items-center gap-1 rounded bg-rose-950/90 border border-rose-600 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+          <AlertTriangle className="h-3 w-3" />
+          Denied
+        </span>
+      );
     default:
       return null;
   }

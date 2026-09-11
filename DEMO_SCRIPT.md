@@ -119,6 +119,9 @@ This table explains the deliberate engineering purpose of every preset button ac
 | **03 (MCP)** | **Test 1: Dynamic Tool Call** | `Inspect the files in the current directory using list_dir.` | **Demonstrates MCP Decoupling**: Autonomous Tier 1 tool executed over out-of-process `stdio` JSON-RPC without local backend tool code. |
 | **03 (MCP)** | **Test 2: Tier 2 MCP Write** | `Create a file named demo-mcp.txt with content "Hello from Model Context Protocol!".` | **Demonstrates Pre-RPC HITL Security**: Tier 2 gate halts execution and requests operator approval before transmitting `tools/call` over the MCP transport. |
 | **03 (MCP)** | **Test 3: Tier 3 MCP Shell** | `Execute a bash command to check the current date and time.` | **Demonstrates Protocol-Standard Sandboxing**: High-risk terminal command guarded by preview modal, isolated inside standalone subprocess. |
+| **01 (Naive)** | **Failure 4: Unchecked PowerShell (Windows)** | `Use the bash tool ... Remove-Item -Force ./debug.log` | **Windows host**: Same blind-deletion demo using PowerShell, because `bash` executes in `powershell.exe` on Windows. |
+| **02 (Hardened)** | **Test 4: Tier 3 HITL PowerShell (Windows)** | `Use the bash tool ... Remove-Item -Force ./debug.log` | **Windows host**: Tier 3 red modal previews the PowerShell command (`PS>`) before execution. |
+| **03 (MCP)** | **Test 4: Tier 3 MCP PowerShell (Windows)** | `Use the bash tool ... Get-Date` | **Windows host**: Date/time check via PowerShell `Get-Date`, still gated and dispatched over MCP stdio. |
 
 ---
 

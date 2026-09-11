@@ -184,19 +184,24 @@ export class AgentService {
     this.pendingActions.delete(actionId);
 
     if (!approved) {
+      const blocked =
+        frame.toolName === 'bash' ? String(frame.args?.command ?? '') : JSON.stringify(frame.args);
+      const denialReason = reason || 'Action denied by user operator.';
+      const content =
+        `Operator denied this ${frame.toolName} command. It was NOT executed, so no files were changed.\n\n` +
+        `Blocked command: ${blocked}\n` +
+        `Reason: ${denialReason}`;
+
       this.sendSSE(res, 'ACTION_REJECTED', {
         actionId,
+        toolCallId: frame.toolCallId,
         toolName: frame.toolName,
-        reason: reason || 'Action denied by user operator.',
+        reason: denialReason,
+        command: blocked,
       });
 
-      frame.conversation.push({
-        role: 'tool',
-        tool_call_id: frame.toolCallId,
-        content: `Execution Denied: The operator rejected ${frame.toolName}. Reason: ${reason || 'Action denied.'}`,
-      });
-
-      await this.runAgentLoop(frame.conversation, res, frame.options);
+      this.sendSSE(res, 'FINAL_ANSWER', { content });
+      res.end();
       return;
     }
 
