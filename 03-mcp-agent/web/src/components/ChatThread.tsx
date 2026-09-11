@@ -30,7 +30,7 @@ export const PRESET_PROMPTS = [
   },
   {
     label: 'Test 4: Tier 3 MCP PowerShell (Windows)',
-    prompt: 'Use the bash tool to print the current date and time with this PowerShell command: Get-Date',
+    prompt: 'Call the bash tool and set command to exactly Get-Date with no cmd, /c, or date prefix.',
     desc: 'Windows host: Get-Date runs in PowerShell after MCP approval',
     tool: 'bash',
     os: 'windows',

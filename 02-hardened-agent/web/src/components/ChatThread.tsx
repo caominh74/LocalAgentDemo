@@ -30,7 +30,7 @@ export const PRESET_PROMPTS = [
   },
   {
     label: 'Test 4: Tier 3 HITL PowerShell (Windows)',
-    prompt: 'Use the bash tool to delete debug.log from the workspace with this PowerShell command: Remove-Item -Force ./debug.log',
+    prompt: 'Call the bash tool and set command to exactly Remove-Item -Force ./debug.log with no cmd, /c, or rm prefix.',
     desc: 'Windows host: PowerShell deletion pauses for red-alert approval',
     tool: 'bash',
     os: 'windows',

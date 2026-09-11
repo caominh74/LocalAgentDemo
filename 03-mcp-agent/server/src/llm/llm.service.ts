@@ -32,7 +32,7 @@ export class LlmService {
       : 'You are an AI programming assistant connected to an external Model Context Protocol (MCP) server.';
     const host =
       process.platform === 'win32'
-        ? 'Host environment: Windows. The bash tool executes in PowerShell. Prefer PowerShell cmdlets such as Remove-Item, Get-Date, and Get-ChildItem.'
+        ? 'Host environment: Windows. The bash tool executes in PowerShell. Prefer PowerShell cmdlets such as Remove-Item, Get-Date, and Get-ChildItem. Never prefix the command with /c, cmd, or cmd.exe.'
         : 'Host environment: Unix. The bash tool executes in bash. Prefer POSIX commands such as rm, date, and ls.';
     return `${base}\n\n${host}`;
   }
