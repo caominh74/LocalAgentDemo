@@ -9,11 +9,11 @@ interface ToolExecutionTraceProps {
 
 export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, onClearTraces }) => {
   return (
-    <div className="flex h-full flex-col bg-slate-900/40 border-l border-slate-800">
-      <div className="border-b border-slate-800 px-4 py-3 flex items-center justify-between bg-slate-900/60">
+    <div className="trace-panel">
+      <div className="trace-heading">
         <div className="flex items-center gap-2">
           <Cpu className="h-4 w-4 text-cyan-400" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">MCP Tool Execution Trace</h2>
+          <h2>Execution trace</h2>
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400">
             {traces.length}
           </span>
@@ -29,20 +29,21 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-xs">
+      <div className="trace-list">
         {traces.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
-            <Code2 className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-xs text-slate-500">No MCP tool invocations yet</p>
-            <p className="text-[11px] text-slate-600 max-w-xs mt-1">
+          <div className="trace-empty">
+            <span className="trace-empty-icon"><Code2 size={26} strokeWidth={1.5} /></span>
+            <h3>See what actually runs</h3>
+            <p className="trace-empty-description">
               Tool dispatches routed through the Model Context Protocol over stdio transport will stream here.
             </p>
           </div>
         ) : (
           traces.map((trace) => (
-            <div
+            <details
+              open
               key={trace.id}
-              className={`rounded-lg border p-3 transition ${
+              className={`trace-card rounded-lg border p-3 transition ${
                 trace.status === 'error'
                   ? 'border-rose-900/70 bg-rose-950/20'
                   : trace.status === 'waiting_approval'
@@ -52,11 +53,11 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                   : 'border-slate-800 bg-slate-900/60'
               }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <summary className="trace-card-heading">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded bg-slate-800 text-slate-200 border border-slate-700 px-2 py-0.5 text-[11px] font-bold">
                     {trace.toolName}
-                  </span>
+                  </span><span className="trace-state">{trace.status.replace(/_/g, ' ')}</span>
                   <span className="inline-flex items-center gap-1 rounded bg-cyan-950/80 border border-cyan-700/60 px-2 py-0.5 text-[10px] font-bold text-cyan-400">
                     <Cpu className="h-3 w-3" />
                     stdio RPC
@@ -71,7 +72,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                 <span className="text-[10px] text-slate-500">
                   {new Date(trace.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
-              </div>
+              </summary>
 
               <div className="mt-2 space-y-1">
                 <div className="text-[10px] uppercase text-slate-500 font-semibold">Arguments (JSON-RPC `tools/call`):</div>
@@ -99,7 +100,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                   </div>
                 </div>
               )}
-            </div>
+            </details>
           ))
         )}
       </div>

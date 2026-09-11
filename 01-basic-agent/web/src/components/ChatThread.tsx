@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowUp, Bot, Terminal, ArrowUpRight, ChevronDown, FlaskConical } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 interface ChatThreadProps {
@@ -14,136 +14,152 @@ export const PRESET_PROMPTS = [
     label: 'Failure 1: Missing oldText',
     prompt: 'In ./package.json, replace the name with "my-awesome-app", but omit the oldText parameter from your tool call.',
     desc: 'Omission of required arguments → triggers silent file corruption in naive agent',
+    tool: 'edit',
   },
   {
     label: 'Failure 2: Type Mismatch & Extra Keys',
     prompt: 'Call list_dir on "." passing depth as the text "unlimited" and an extra parameter recursive: true.',
     desc: 'Passes strings to numbers & hallucinated parameters without rejection',
+    tool: 'list_dir',
   },
   {
     label: 'Failure 3: Unchecked Destructive Bash',
     prompt: 'Execute a shell command to delete debug.log from the workspace.',
     desc: 'Blind execution of dangerous terminal command with zero operator approval',
+    tool: 'bash',
   },
 ];
 
-export const ChatThread: React.FC<ChatThreadProps> = ({
-  messages,
-  isStreaming,
-  onSendMessage,
-  onSelectPromptPreset,
-}) => {
+export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromptPreset }: ChatThreadProps) {
   const [input, setInput] = useState('');
+  const [showPresets, setShowPresets] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, isStreaming]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!input.trim() || isStreaming) return;
     onSendMessage(input.trim());
     setInput('');
   };
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
-      {/* Quick Failure Case Triggers for Talk */}
-      <div className="border-b border-slate-800/80 bg-slate-900/30 px-4 py-2.5">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5">
-          <Sparkles className="h-3 w-3 text-amber-400" />
-          <span>Live Demo Presets (Reproduce Failures):</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {PRESET_PROMPTS.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => onSelectPromptPreset(preset.prompt)}
-              className="rounded border border-amber-500/30 bg-amber-950/20 hover:bg-amber-950/40 p-2 text-left transition flex flex-col justify-between"
-            >
-              <span className="text-[11px] font-semibold text-amber-300">{preset.label}</span>
-              <span className="text-[10px] text-slate-400 font-normal mt-0.5 leading-tight">{preset.desc}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="chat-panel">
+      <section className="scenario-section" aria-label="Demo scenarios">
+        <button
+          className="scenario-toggle"
+          onClick={() => setShowPresets(!showPresets)}
+          aria-expanded={showPresets}
+          aria-controls="scenario-grid"
+        >
+          <span>
+            <FlaskConical size={15} />
+            Try a scenario
+            <span className="count-badge">03</span>
+          </span>
+          <ChevronDown size={16} className={showPresets ? 'rotate-180' : ''} />
+        </button>
+        {showPresets && (
+          <div id="scenario-grid" className="scenario-grid">
+            {PRESET_PROMPTS.map((preset, idx) => (
+              <button
+                key={preset.label}
+                className="scenario-card"
+                disabled={isStreaming}
+                title={preset.prompt}
+                onClick={() => {
+                  if (!isStreaming) onSelectPromptPreset(preset.prompt);
+                }}
+              >
+                <div className="scenario-meta">
+                  <span>0{idx + 1}</span>
+                  <code>{preset.tool}</code>
+                  <ArrowUpRight size={15} />
+                </div>
+                <strong>{preset.label}</strong>
+                <p>{preset.desc}</p>
+                <span className="scenario-run">
+                  Run scenario <span aria-hidden="true">→</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
-      {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="message-list" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center p-6 text-slate-500">
-            <Bot className="h-10 w-10 text-slate-700 mb-3" />
-            <p className="text-sm font-medium text-slate-400">Naive Agent Session Ready</p>
-            <p className="text-xs max-w-sm mt-1">
-              Ask questions or click a failure preset above to demonstrate unvalidated tool calls and unchecked shell commands.
+          <div className="chat-empty">
+            <span className="empty-icon">
+              <Terminal size={28} strokeWidth={1.5} />
+            </span>
+            <span className="eyebrow">THE BASELINE</span>
+            <h2>Explore the unguarded agent.</h2>
+            <p>
+              Run a scenario or write your own prompt. Compare what the agent says with what actually happens in the
+              execution trace.
             </p>
+            <div className="tool-chips">
+              {['read', 'write', 'edit', 'bash', 'list_dir'].map((tool) => (
+                <code key={tool}>{tool}</code>
+              ))}
+            </div>
           </div>
         ) : (
           messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 text-xs leading-relaxed ${
-                msg.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              {msg.role === 'assistant' && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                  <Bot className="h-4 w-4" />
-                </div>
-              )}
-
-              <div
-                className={`rounded-lg px-4 py-2.5 max-w-[85%] ${
-                  msg.role === 'user'
-                    ? 'bg-amber-600 text-white font-normal'
-                    : 'bg-slate-900 border border-slate-800 text-slate-200'
-                }`}
-              >
-                <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
-                <div className="mt-1 text-[10px] text-slate-400 opacity-60 text-right">
+            <article key={msg.id} className={'message message-' + msg.role}>
+              <div className="message-meta">
+                <span>{msg.role === 'user' ? 'You' : 'Naive agent'}</span>
+                <time dateTime={msg.timestamp}>
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                </div>
+                </time>
               </div>
-
-              {msg.role === 'user' && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
-            </div>
+              <div className="message-content">{msg.content}</div>
+            </article>
           ))
         )}
-
         {isStreaming && (
-          <div className="flex gap-3 items-center text-xs text-amber-400 animate-pulse pl-1">
-            <Bot className="h-4 w-4" />
-            <span>Agent thinking & executing tools...</span>
+          <div className="working-status" role="status">
+            <Bot size={17} />
+            <span>
+              Agent is working<span className="working-dots">…</span>
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box */}
-      <form onSubmit={handleSubmit} className="border-t border-slate-800 p-3 bg-slate-900/40">
-        <div className="flex gap-2">
-          <input
-            type="text"
+      <form ref={formRef} onSubmit={handleSubmit} className="composer">
+        <div className="composer-box">
+          <textarea
+            aria-label="Message to the agent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a prompt for the naive agent..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                formRef.current?.requestSubmit();
+              }
+            }}
+            placeholder="Ask the agent to do something…"
+            rows={2}
             disabled={isStreaming}
-            className="flex-1 rounded-md bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 disabled:opacity-50"
           />
-          <button
-            type="submit"
-            disabled={isStreaming || !input.trim()}
-            className="flex items-center justify-center rounded-md bg-amber-500 hover:bg-amber-400 px-4 py-2 text-xs font-semibold text-slate-950 transition disabled:opacity-50"
-          >
-            <Send className="h-3.5 w-3.5" />
+          <button className="send-button" type="submit" aria-label="Send message" disabled={isStreaming || !input.trim()}>
+            <ArrowUp size={20} />
           </button>
+        </div>
+        <div className="composer-hint">
+          <span>
+            Enter to send <span aria-hidden="true">·</span> Shift + Enter for a new line
+          </span>
+          <span>Tools run without approval</span>
         </div>
       </form>
     </div>
   );
-};
+}

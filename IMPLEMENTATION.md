@@ -15,7 +15,7 @@ CRITICAL OPERATIONAL RULES FOR CODING AGENTS:
 
 | Metric | Current Value | Notes |
 | :--- | :--- | :--- |
-| **Active Milestone** | **Milestone 7 (Pedagogical Preset Tuning, Dynamic Asset Hot-Reload & Schema Hardening)** | 100% Build & E2E Verified |
+| **Active Milestone** | **Milestone 8 (UI Modernization)** | Complete on `new-ui`; prior milestones complete |
 | **Overall Progress** | `100%` | All 3 agent setups, UI, stdio MCP server, sandboxes, presets, and DEMO_SCRIPT.md complete |
 | **Current Blocker(s)** | None | Fully runnable and tested on Bun v1.3.14 |
 | **Target LLM Runtime** | Local OpenAI-Compatible | Ollama (`http://localhost:11434/v1`), vLLM (`http://localhost:8000/v1`), or LM Studio |
@@ -38,6 +38,7 @@ flowchart LR
     M4 --> M5[M5: Polish & Guide (DONE)]
     M5 --> M6[M6: Sandbox Isolation (DONE)]
     M6 --> M7[M7: Presets & Schemas (DONE)]
+    M7 --> M8[M8: UI Modernization (DONE)]
 ```
 
 ---
@@ -238,6 +239,13 @@ flowchart LR
 
 ## 3. Decision & Deviation Log
 
+### Milestone 8: UI Modernization
+
+- [x] Modernize all three independent frontends with consistent typography, scenario cards, endpoint settings, responsive chat/trace panels, and accessible controls.
+- [x] Preserve tool traces, validation feedback, approval/rejection previews, and MCP discovery details.
+- [x] Build affected applications and verify desktop/mobile layouts and key interactions.
+
+
 | Date | Author / Agent | Component | Decision / Deviation Description | Rationale |
 | :--- | :--- | :--- | :--- | :--- |
 | *2026-09-09* | Systems Architect | Global Architecture | Isolated 3 standalone folders with zero shared packages. | Guarantees complete isolation and permits each setup to run or break independently during live talks. |
@@ -262,4 +270,4 @@ flowchart LR
 | *2026-09-11* | Systems Architect | Schema Strictness | Added `.strict()` to `ListDirToolSchema` and chained `.describe()` across all Zod tool properties. | Rejects extra hallucinated keys (e.g. `recursive: true`) and generates complete OpenAPI descriptions for the model. |
 | *2026-09-11* | Systems Architect | UI Pedagogical Cards | Redesigned preset buttons into card grids with explicit subtitles explaining the test purpose. | Makes testing objectives immediately visible to presenters and audience without relying on mouse hover tooltips. |
 | *2026-09-11* | Systems Architect | Testing & Failure Analysis | Created `TESTING.md` documenting live empirical evaluation with `qwen2.5-1.5b-instruct`. | Formally details silent corruption, gaslighting discrepancies, and phantom actions for peer agent review. |
-
+| *2026-09-11* | Grok (resume Codex) | Web UI Modernization | Replaced the dense header/preset layout with a shared workspace chrome: demo switcher, collapsible endpoint settings, pedagogical scenario cards, larger composer, and a hideable execution trace. Added per-demo accent themes (amber/emerald/cyan) via a duplicated `index.css` because the three apps stay independently packaged. | Live-talk UI was hard to read (tiny type, competing controls). Codex had rewritten the TSX on `new-ui` but crashed before the stylesheet landed; this session finished the CSS, restored original preset copy, and verified desktop/mobile interactions. |

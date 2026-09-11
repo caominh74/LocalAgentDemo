@@ -9,12 +9,12 @@ interface ToolExecutionTraceProps {
 
 export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, onClearTraces }) => {
   return (
-    <div className="flex h-full flex-col bg-slate-900/40 border-l border-slate-800">
+    <div className="trace-panel">
       {/* Panel Header */}
-      <div className="border-b border-slate-800 px-4 py-3 flex items-center justify-between bg-slate-900/60">
+      <div className="trace-heading">
         <div className="flex items-center gap-2">
           <Terminal className="h-4 w-4 text-amber-400" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">Tool Execution Trace</h2>
+          <h2>Execution trace</h2>
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400">
             {traces.length}
           </span>
@@ -31,20 +31,21 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
       </div>
 
       {/* Trace Log Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-xs">
+      <div className="trace-list">
         {traces.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
-            <Code2 className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-xs text-slate-500">No tool activity yet</p>
-            <p className="text-[11px] text-slate-600 max-w-xs mt-1">
+          <div className="trace-empty">
+            <span className="trace-empty-icon"><Code2 size={26} strokeWidth={1.5} /></span>
+            <h3>See what actually runs</h3>
+            <p className="trace-empty-description">
               Raw JSON payloads, tool arguments, stdout/stderr, and runtime exceptions will stream here in real time.
             </p>
           </div>
         ) : (
           traces.map((trace) => (
-            <div
+            <details
+              open
               key={trace.id}
-              className={`rounded-lg border p-3 transition ${
+              className={`trace-card rounded-lg border p-3 transition ${
                 trace.status === 'error'
                   ? 'border-red-900/80 bg-red-950/20'
                   : trace.status === 'success'
@@ -53,8 +54,8 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
               }`}
             >
               {/* Header line of trace card */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <summary className="trace-card-heading">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 text-[11px] font-semibold">
                     {trace.toolName}
                   </span>
@@ -77,7 +78,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                 <span className="text-[10px] text-slate-500">
                   {new Date(trace.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
-              </div>
+              </summary>
 
               {/* Arguments Section */}
               <div className="mt-2 space-y-1">
@@ -111,7 +112,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                   </div>
                 </div>
               )}
-            </div>
+            </details>
           ))
         )}
       </div>
