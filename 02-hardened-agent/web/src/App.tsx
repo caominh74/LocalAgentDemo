@@ -65,7 +65,36 @@ export function App() {
         try {
           const event = JSON.parse(jsonStr);
 
-          if (event.type === 'VALIDATION_PASSED') {
+          if (event.type === 'LLM_ROUND_START') {
+            setTraces((prev) => [
+              ...prev.map((t) =>
+                t.status === 'thinking' ? { ...t, status: 'model_replied' as const } : t
+              ),
+              {
+                id: crypto.randomUUID(),
+                toolCallId: event.data.roundId,
+                toolName: 'llm',
+                status: 'thinking',
+                iteration: event.data.iteration,
+                maxIterations: event.data.maxIterations,
+                timestamp: new Date().toISOString(),
+              },
+            ]);
+          } else if (event.type === 'LLM_ROUND_DONE') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.toolCallId === event.data.roundId
+                  ? {
+                      ...t,
+                      status: 'model_replied',
+                      result: event.data.hasToolCalls
+                        ? `${event.data.toolCount} tool call${event.data.toolCount === 1 ? '' : 's'}`
+                        : 'final answer',
+                    }
+                  : t
+              )
+            );
+          } else if (event.type === 'VALIDATION_PASSED') {
             setTraces((prev) => [
               ...prev,
               {
@@ -175,6 +204,12 @@ export function App() {
                 timestamp: new Date().toISOString(),
               },
             ]);
+          } else if (event.type === 'ERROR') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.status === 'thinking' ? { ...t, status: 'error', error: event.data.message } : t
+              )
+            );
           }
         } catch (parseErr) {
           console.error('Failed to parse SSE event:', parseErr, jsonStr);

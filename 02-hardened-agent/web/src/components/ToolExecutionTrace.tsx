@@ -1,5 +1,5 @@
-import React from 'react';
-import { Terminal, Shield, Trash2, Code2, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Shield, Trash2, Code2, AlertTriangle, CheckCircle2, ShieldAlert, Clock, Bot } from 'lucide-react';
 import { ToolTraceItem } from '../types';
 import { ValidationBadge } from './ValidationBadge';
 
@@ -9,6 +9,13 @@ interface ToolExecutionTraceProps {
 }
 
 export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, onClearTraces }) => {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [traces]);
+
   return (
     <div className="trace-panel">
       {/* Panel Header */}
@@ -32,7 +39,7 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
       </div>
 
       {/* Trace Items */}
-      <div className="trace-list">
+      <div className="trace-list" ref={listRef}>
         {traces.length === 0 ? (
           <div className="trace-empty">
             <span className="trace-empty-icon"><Code2 size={26} strokeWidth={1.5} /></span>
@@ -42,7 +49,33 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
             </p>
           </div>
         ) : (
-          traces.map((trace) => (
+          traces.map((trace) =>
+            trace.toolName === 'llm' ? (
+              <div key={trace.id} className="trace-round" data-state={trace.status}>
+                <div className="trace-round-label">
+                  {trace.status === 'thinking' ? (
+                    <Clock className="h-3.5 w-3.5 animate-spin" />
+                  ) : trace.status === 'error' ? (
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  ) : (
+                    <Bot className="h-3.5 w-3.5" />
+                  )}
+                  <span>
+                    {trace.status === 'thinking'
+                      ? 'Waiting on model'
+                      : trace.status === 'error'
+                      ? 'Model round failed'
+                      : 'Model replied'}
+                  </span>
+                  {trace.iteration != null && (
+                    <span className="trace-round-meta">
+                      round {trace.iteration}/{trace.maxIterations ?? '?'}
+                    </span>
+                  )}
+                </div>
+                <span className="trace-round-result">{trace.error || trace.result || ''}</span>
+              </div>
+            ) : (
             <details
               open
               key={trace.id}
@@ -129,7 +162,8 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                 </div>
               )}
             </details>
-          ))
+            )
+          )
         )}
       </div>
     </div>

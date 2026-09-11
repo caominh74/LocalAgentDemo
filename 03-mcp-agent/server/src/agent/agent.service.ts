@@ -27,9 +27,11 @@ export class AgentService {
   ) {}
 
   private sendSSE(res: Response, type: string, data: any) {
-    if (!res.writableEnded) {
-      res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
-    }
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+    res.socket?.setNoDelay(true);
+    const flush = (res as Response & { flush?: () => void }).flush;
+    if (typeof flush === 'function') flush.call(res);
   }
 
   async runAgentLoop(
@@ -45,12 +47,22 @@ export class AgentService {
       while (iteration < maxIterations) {
         iteration++;
 
-        // 1. Invoke LLM with dynamic MCP tools
+        const roundId = crypto.randomUUID();
+        this.sendSSE(res, 'LLM_ROUND_START', { roundId, iteration, maxIterations });
+
         const assistantMessage = await this.llmService.callChatCompletion(conversation, options);
 
         if (!assistantMessage) {
           throw new Error('LLM returned an empty response');
         }
+
+        const toolCount = assistantMessage.tool_calls?.length ?? 0;
+        this.sendSSE(res, 'LLM_ROUND_DONE', {
+          roundId,
+          iteration,
+          hasToolCalls: toolCount > 0,
+          toolCount,
+        });
 
         conversation.push(assistantMessage);
 

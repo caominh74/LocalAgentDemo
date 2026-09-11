@@ -4,7 +4,15 @@ import { ToolsService } from '../tools/tools.service';
 import type { Response } from 'express';
 
 export interface StreamEvent {
-  type: 'TOKEN' | 'TOOL_INVOCATION' | 'TOOL_RESULT' | 'TOOL_ERROR' | 'FINAL_ANSWER' | 'ERROR';
+  type:
+    | 'TOKEN'
+    | 'LLM_ROUND_START'
+    | 'LLM_ROUND_DONE'
+    | 'TOOL_INVOCATION'
+    | 'TOOL_RESULT'
+    | 'TOOL_ERROR'
+    | 'FINAL_ANSWER'
+    | 'ERROR';
   data: any;
 }
 
@@ -16,7 +24,11 @@ export class AgentService {
   ) {}
 
   private sendSSE(res: Response, event: StreamEvent) {
+    if (res.writableEnded) return;
     res.write(`data: ${JSON.stringify(event)}\n\n`);
+    res.socket?.setNoDelay(true);
+    const flush = (res as Response & { flush?: () => void }).flush;
+    if (typeof flush === 'function') flush.call(res);
   }
 
   async runAgentLoop(
@@ -32,12 +44,23 @@ export class AgentService {
       while (iteration < maxIterations) {
         iteration++;
 
-        // 1. Query LLM
+        const roundId = crypto.randomUUID();
+        this.sendSSE(res, {
+          type: 'LLM_ROUND_START',
+          data: { roundId, iteration, maxIterations },
+        });
+
         const assistantMessage = await this.llmService.callChatCompletion(conversation, options);
 
         if (!assistantMessage) {
           throw new Error('LLM returned an empty response');
         }
+
+        const toolCount = assistantMessage.tool_calls?.length ?? 0;
+        this.sendSSE(res, {
+          type: 'LLM_ROUND_DONE',
+          data: { roundId, iteration, hasToolCalls: toolCount > 0, toolCount },
+        });
 
         conversation.push(assistantMessage);
 

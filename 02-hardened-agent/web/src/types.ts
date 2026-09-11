@@ -11,7 +11,9 @@ export interface ToolTraceItem {
   id: string;
   toolCallId: string;
   toolName: string;
-  status: 'invoked' | 'validating' | 'passed' | 'hallucinated' | 'correcting' | 'circuit_breaker' | 'waiting_approval' | 'approved' | 'rejected' | 'success' | 'error';
+  status: 'thinking' | 'model_replied' | 'invoked' | 'validating' | 'passed' | 'hallucinated' | 'correcting' | 'circuit_breaker' | 'waiting_approval' | 'approved' | 'rejected' | 'success' | 'error';
+  iteration?: number;
+  maxIterations?: number;
   validationBadge?: ValidationBadgeType;
   arguments?: any;
   rawArguments?: string;

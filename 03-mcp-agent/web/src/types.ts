@@ -28,7 +28,9 @@ export interface ToolTraceItem {
   id: string;
   toolCallId: string;
   toolName: string;
-  status: 'invoked' | 'waiting_approval' | 'approved' | 'rejected' | 'success' | 'error';
+  status: 'thinking' | 'model_replied' | 'invoked' | 'waiting_approval' | 'approved' | 'rejected' | 'success' | 'error';
+  iteration?: number;
+  maxIterations?: number;
   arguments?: any;
   result?: string;
   error?: string;
