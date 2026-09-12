@@ -9,12 +9,14 @@ export interface ToolTraceItem {
   id: string;
   toolCallId: string;
   toolName: string;
-  status: 'invoked' | 'success' | 'error';
+  status: 'thinking' | 'model_replied' | 'invoked' | 'success' | 'error';
   rawArguments?: string;
   arguments?: any;
   result?: string;
   error?: string;
   stack?: string;
+  iteration?: number;
+  maxIterations?: number;
   timestamp: string;
 }
 

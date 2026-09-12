@@ -1,92 +1,137 @@
 import React, { useState } from 'react';
-import { Settings2, Cpu } from 'lucide-react';
+import { Settings2, Terminal, Network, ChevronDown, ArrowRight } from 'lucide-react';
 import { AgentConfig, McpServerStatus } from '../types';
 import { McpStatusBadge } from './McpStatusBadge';
 
 interface ConfigHeaderProps {
   config: AgentConfig;
+  onChangeConfig: (config: AgentConfig) => void;
   mcpStatus: McpServerStatus | null;
-  onChangeConfig: (newConfig: AgentConfig) => void;
   onRefreshMcp: () => void;
 }
 
-export const ConfigHeader: React.FC<ConfigHeaderProps> = ({
-  config,
-  mcpStatus,
-  onChangeConfig,
-  onRefreshMcp,
-}) => {
+export function ConfigHeader({ config, onChangeConfig, mcpStatus, onRefreshMcp }: ConfigHeaderProps) {
   const [showSettings, setShowSettings] = useState(false);
 
+  const demoUrl = (port: number) => {
+    const url = new URL(window.location.href);
+    url.port = String(port);
+    url.pathname = '/';
+    url.search = '';
+    url.hash = '';
+    return url.href;
+  };
+
   return (
-    <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 py-3 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-            <Cpu className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-tight text-white">Demo 3: The MCP Agent</h1>
-              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 border border-slate-700">Port 5175</span>
-              <McpStatusBadge status={mcpStatus} onRefresh={onRefreshMcp} />
-            </div>
-            <p className="text-[11px] text-slate-500">Decoupled Tools · stdio Child Process · Dynamic Capability Discovery</p>
-          </div>
+    <header className="app-header">
+      <div className="topbar">
+        <div className="brand">
+          <span className="brand-mark">
+            <Terminal size={19} />
+          </span>
+          <span>
+            Local Agent
+            <span className="brand-sub">Architecture lab</span>
+          </span>
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-md border border-slate-800">
-            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span>{config.model}</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-500 text-[11px] truncate max-w-[180px]">{config.baseUrl}</span>
-          </div>
-
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-1.5 rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-200 border border-slate-700 transition"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            <span>Endpoint</span>
-          </button>
-        </div>
+        <nav className="demo-nav" aria-label="Agent demos">
+          {['Naive', 'Hardened', 'MCP'].map((name, idx) => (
+            <a
+              key={name}
+              href={demoUrl(5173 + idx)}
+              aria-current={idx === 2 ? 'page' : undefined}
+            >
+              <span>0{idx + 1}</span>
+              {name}
+            </a>
+          ))}
+        </nav>
+        <button
+          className="secondary-button settings-toggle"
+          aria-expanded={showSettings}
+          aria-controls="endpoint-settings"
+          onClick={() => setShowSettings(!showSettings)}
+        >
+          <Settings2 size={16} />
+          Endpoint settings
+          <ChevronDown size={14} className={showSettings ? 'rotate-180' : ''} />
+        </button>
       </div>
 
       {showSettings && (
-        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">Inference Base URL</label>
-            <input
-              type="text"
-              value={config.baseUrl}
-              onChange={(e) => onChangeConfig({ ...config, baseUrl: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono text-xs"
-              placeholder="http://localhost:11434/v1"
-            />
+        <section id="endpoint-settings" className="endpoint-settings" aria-label="Endpoint settings">
+          <div className="settings-caption">
+            <strong>Inference connection</strong>
+            <span>Changes apply to the next request.</span>
           </div>
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">Model Name</label>
-            <input
-              type="text"
-              value={config.model}
-              onChange={(e) => onChangeConfig({ ...config, model: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono text-xs"
-              placeholder="llama3.2"
-            />
+          <div className="settings-fields">
+            <label htmlFor="base-url">
+              Inference base URL
+              <input
+                id="base-url"
+                type="url"
+                value={config.baseUrl}
+                onChange={(e) => onChangeConfig({ ...config, baseUrl: e.target.value })}
+                placeholder="http://localhost:11434/v1"
+                spellCheck={false}
+              />
+            </label>
+            <label htmlFor="model-name">
+              Model name
+              <input
+                id="model-name"
+                value={config.model}
+                onChange={(e) => onChangeConfig({ ...config, model: e.target.value })}
+                placeholder="Model identifier"
+                spellCheck={false}
+              />
+            </label>
+            <label htmlFor="api-key">
+              API key
+              <input
+                id="api-key"
+                type="password"
+                value={config.apiKey}
+                onChange={(e) => onChangeConfig({ ...config, apiKey: e.target.value })}
+                placeholder="API key (if required)"
+                autoComplete="off"
+              />
+            </label>
           </div>
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">API Key</label>
-            <input
-              type="password"
-              value={config.apiKey}
-              onChange={(e) => onChangeConfig({ ...config, apiKey: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono text-xs"
-              placeholder="ollama"
-            />
-          </div>
-        </div>
+        </section>
       )}
+
+      <div className="demo-heading">
+        <div>
+          <div className="eyebrow">
+            EXPERIMENT 03<span>PORT 5175</span>
+          </div>
+          <div className="demo-title">
+            <h1>MCP agent</h1>
+            <span className="mode-badge">
+              <Network size={13} />
+              Tools over MCP
+            </span>
+          </div>
+          <p>Discover tools dynamically and follow calls into a separate MCP process.</p>
+        </div>
+        <div className="connection-summary">
+          <div className="model-label">CONFIGURED MODEL</div>
+          <strong>{config.model || 'Not configured'}</strong>
+          <span className="endpoint-address" title={config.baseUrl}>
+            {config.baseUrl || 'Choose an endpoint to get started'}
+          </span>
+          <McpStatusBadge status={mcpStatus} onRefresh={onRefreshMcp} />
+        </div>
+      </div>
+      <div className="architecture-path" aria-label="Execution architecture">
+        <span>Model</span>
+        <ArrowRight size={13} />
+        <span>Approval gate</span>
+        <ArrowRight size={13} />
+        <span>MCP server</span>
+        <span className="path-note">Dynamic discovery · stdio transport</span>
+      </div>
     </header>
   );
-};
+}

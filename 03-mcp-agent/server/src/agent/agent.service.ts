@@ -27,9 +27,11 @@ export class AgentService {
   ) {}
 
   private sendSSE(res: Response, type: string, data: any) {
-    if (!res.writableEnded) {
-      res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
-    }
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+    res.socket?.setNoDelay(true);
+    const flush = (res as Response & { flush?: () => void }).flush;
+    if (typeof flush === 'function') flush.call(res);
   }
 
   async runAgentLoop(
@@ -38,19 +40,29 @@ export class AgentService {
     options?: { baseUrl?: string; model?: string; apiKey?: string }
   ): Promise<void> {
     const conversation: ChatMessage[] = [...messages];
-    const maxIterations = 6;
+    const maxIterations = 8;
     let iteration = 0;
 
     try {
       while (iteration < maxIterations) {
         iteration++;
 
-        // 1. Invoke LLM with dynamic MCP tools
+        const roundId = crypto.randomUUID();
+        this.sendSSE(res, 'LLM_ROUND_START', { roundId, iteration, maxIterations });
+
         const assistantMessage = await this.llmService.callChatCompletion(conversation, options);
 
         if (!assistantMessage) {
           throw new Error('LLM returned an empty response');
         }
+
+        const toolCount = assistantMessage.tool_calls?.length ?? 0;
+        this.sendSSE(res, 'LLM_ROUND_DONE', {
+          roundId,
+          iteration,
+          hasToolCalls: toolCount > 0,
+          toolCount,
+        });
 
         conversation.push(assistantMessage);
 
@@ -184,19 +196,24 @@ export class AgentService {
     this.pendingActions.delete(actionId);
 
     if (!approved) {
+      const blocked =
+        frame.toolName === 'bash' ? String(frame.args?.command ?? '') : JSON.stringify(frame.args);
+      const denialReason = reason || 'Action denied by user operator.';
+      const content =
+        `Operator denied this ${frame.toolName} command. It was NOT executed, so no files were changed.\n\n` +
+        `Blocked command: ${blocked}\n` +
+        `Reason: ${denialReason}`;
+
       this.sendSSE(res, 'ACTION_REJECTED', {
         actionId,
+        toolCallId: frame.toolCallId,
         toolName: frame.toolName,
-        reason: reason || 'Action denied by user operator.',
+        reason: denialReason,
+        command: blocked,
       });
 
-      frame.conversation.push({
-        role: 'tool',
-        tool_call_id: frame.toolCallId,
-        content: `Execution Denied: The operator rejected ${frame.toolName}. Reason: ${reason || 'Action denied.'}`,
-      });
-
-      await this.runAgentLoop(frame.conversation, res, frame.options);
+      this.sendSSE(res, 'FINAL_ANSWER', { content });
+      res.end();
       return;
     }
 

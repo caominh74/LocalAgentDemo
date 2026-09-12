@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PanelRightClose, PanelRightOpen, MessageSquare } from 'lucide-react';
 import { ConfigHeader } from './components/ConfigHeader';
 import { ChatThread } from './components/ChatThread';
 import { ToolExecutionTrace } from './components/ToolExecutionTrace';
@@ -8,6 +9,7 @@ import { ChatMessage, ToolTraceItem, AgentConfig, PendingApprovalAction, McpServ
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003').replace(/\/+$/, '');
 
 export function App() {
+  const [showTrace, setShowTrace] = useState(() => window.matchMedia('(min-width: 1080px)').matches);
   const [config, setConfig] = useState<AgentConfig>({
     baseUrl: import.meta.env.VITE_LLM_BASE_URL || '',
     model: import.meta.env.VITE_LLM_MODEL || '',
@@ -80,7 +82,36 @@ export function App() {
         try {
           const event = JSON.parse(jsonStr);
 
-          if (event.type === 'TOOL_DISPATCH_MCP') {
+          if (event.type === 'LLM_ROUND_START') {
+            setTraces((prev) => [
+              ...prev.map((t) =>
+                t.status === 'thinking' ? { ...t, status: 'model_replied' as const } : t
+              ),
+              {
+                id: crypto.randomUUID(),
+                toolCallId: event.data.roundId,
+                toolName: 'llm',
+                status: 'thinking',
+                iteration: event.data.iteration,
+                maxIterations: event.data.maxIterations,
+                timestamp: new Date().toISOString(),
+              },
+            ]);
+          } else if (event.type === 'LLM_ROUND_DONE') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.toolCallId === event.data.roundId
+                  ? {
+                      ...t,
+                      status: 'model_replied',
+                      result: event.data.hasToolCalls
+                        ? `${event.data.toolCount} tool call${event.data.toolCount === 1 ? '' : 's'}`
+                        : 'final answer',
+                    }
+                  : t
+              )
+            );
+          } else if (event.type === 'TOOL_DISPATCH_MCP') {
             setTraces((prev) => [
               ...prev,
               {
@@ -105,6 +136,14 @@ export function App() {
                 timestamp: new Date().toISOString(),
               },
             ]);
+          } else if (event.type === 'ACTION_REJECTED') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.toolCallId === event.data.toolCallId
+                  ? { ...t, status: 'rejected', error: event.data.reason }
+                  : t
+              )
+            );
           } else if (event.type === 'TOOL_RESULT') {
             setTraces((prev) =>
               prev.map((t) =>
@@ -133,6 +172,12 @@ export function App() {
                 timestamp: new Date().toISOString(),
               },
             ]);
+          } else if (event.type === 'ERROR') {
+            setTraces((prev) =>
+              prev.map((t) =>
+                t.status === 'thinking' ? { ...t, status: 'error', error: event.data.message } : t
+              )
+            );
           }
         } catch (parseErr) {
           console.error('Failed to parse SSE event:', parseErr, jsonStr);
@@ -224,28 +269,46 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-slate-100 antialiased overflow-hidden">
+    <div className="app-shell theme-cyan">
       <ConfigHeader
         config={config}
         mcpStatus={mcpStatus}
         onChangeConfig={setConfig}
         onRefreshMcp={fetchMcpStatus}
       />
-      <main className="flex flex-1 overflow-hidden">
-        {/* Left Column: Chat Thread */}
-        <div className="flex-1 min-w-0">
+      <div className="workspace-toolbar">
+        <div>
+          <MessageSquare size={16} />
+          <h2>Conversation</h2>
+          <span className="session-state" role="status">
+            {pendingApproval ? 'Awaiting approval' : isStreaming ? 'Running' : 'Idle'}
+          </span>
+        </div>
+        <button
+          className="text-button"
+          aria-expanded={showTrace}
+          aria-controls="execution-panel"
+          onClick={() => setShowTrace(!showTrace)}
+        >
+          {showTrace ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+          {showTrace ? 'Hide trace' : 'Show trace'}
+          <span className="count-badge">{traces.length}</span>
+        </button>
+      </div>
+      <main className={showTrace ? 'workspace' : 'workspace trace-hidden'}>
+        <div className="conversation-column">
           <ChatThread
             messages={messages}
-            isStreaming={isStreaming}
+            isStreaming={isStreaming || !!pendingApproval}
             onSendMessage={handleSendMessage}
             onSelectPromptPreset={(prompt) => handleSendMessage(prompt)}
           />
         </div>
-
-        {/* Right Column: MCP Tool Execution Trace */}
-        <div className="w-1/2 min-w-[380px] max-w-xl">
-          <ToolExecutionTrace traces={traces} onClearTraces={() => setTraces([])} />
-        </div>
+        {showTrace && (
+          <div id="execution-panel" className="trace-column">
+            <ToolExecutionTrace traces={traces} onClearTraces={() => setTraces([])} />
+          </div>
+        )}
       </main>
 
       {/* Human-in-the-Loop Modal */}

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "bun run src/main.ts",
-    "dev": "bun --watch src/main.ts"
+    "start": "bun --env-file=../.env run src/main.ts",
+    "dev": "bun --watch --env-file=../.env src/main.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",

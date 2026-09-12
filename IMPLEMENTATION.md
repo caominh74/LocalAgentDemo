@@ -15,7 +15,7 @@ CRITICAL OPERATIONAL RULES FOR CODING AGENTS:
 
 | Metric | Current Value | Notes |
 | :--- | :--- | :--- |
-| **Active Milestone** | **Milestone 7 (Pedagogical Preset Tuning, Dynamic Asset Hot-Reload & Schema Hardening)** | 100% Build & E2E Verified |
+| **Active Milestone** | **Milestone 9 (Windows Host Shell)** | Complete on `feat/cross-platform-shell-support` |
 | **Overall Progress** | `100%` | All 3 agent setups, UI, stdio MCP server, sandboxes, presets, and DEMO_SCRIPT.md complete |
 | **Current Blocker(s)** | None | Fully runnable and tested on Bun v1.3.14 |
 | **Target LLM Runtime** | Local OpenAI-Compatible | Ollama (`http://localhost:11434/v1`), vLLM (`http://localhost:8000/v1`), or LM Studio |
@@ -38,6 +38,8 @@ flowchart LR
     M4 --> M5[M5: Polish & Guide (DONE)]
     M5 --> M6[M6: Sandbox Isolation (DONE)]
     M6 --> M7[M7: Presets & Schemas (DONE)]
+    M7 --> M8[M8: UI Modernization (DONE)]
+    M8 --> M9[M9: Windows Host Shell (DONE)]
 ```
 
 ---
@@ -238,6 +240,19 @@ flowchart LR
 
 ## 3. Decision & Deviation Log
 
+### Milestone 8: UI Modernization
+
+- [x] Modernize all three independent frontends with consistent typography, scenario cards, endpoint settings, responsive chat/trace panels, and accessible controls.
+- [x] Preserve tool traces, validation feedback, approval/rejection previews, and MCP discovery details.
+- [x] Build affected applications and verify desktop/mobile layouts and key interactions.
+
+### Milestone 9: Windows Host Shell
+
+- [x] Run `bash` in real PowerShell on Windows (`powershell.exe -NoProfile -Command`) instead of Node's `cmd.exe /c` wrapper.
+- [x] Keep the tool named `bash` in all three demos so the five-tool contract stays intact.
+- [x] Add Windows PowerShell scenario cards alongside the existing Unix shell presets.
+- [x] Sync system prompts, tool schemas, HITL previews, and docs with the host-shell behavior.
+
 | Date | Author / Agent | Component | Decision / Deviation Description | Rationale |
 | :--- | :--- | :--- | :--- | :--- |
 | *2026-09-09* | Systems Architect | Global Architecture | Isolated 3 standalone folders with zero shared packages. | Guarantees complete isolation and permits each setup to run or break independently during live talks. |
@@ -262,4 +277,13 @@ flowchart LR
 | *2026-09-11* | Systems Architect | Schema Strictness | Added `.strict()` to `ListDirToolSchema` and chained `.describe()` across all Zod tool properties. | Rejects extra hallucinated keys (e.g. `recursive: true`) and generates complete OpenAPI descriptions for the model. |
 | *2026-09-11* | Systems Architect | UI Pedagogical Cards | Redesigned preset buttons into card grids with explicit subtitles explaining the test purpose. | Makes testing objectives immediately visible to presenters and audience without relying on mouse hover tooltips. |
 | *2026-09-11* | Systems Architect | Testing & Failure Analysis | Created `TESTING.md` documenting live empirical evaluation with `qwen2.5-1.5b-instruct`. | Formally details silent corruption, gaslighting discrepancies, and phantom actions for peer agent review. |
-
+| *2026-09-11* | Grok (resume Codex) | Web UI Modernization | Replaced the dense header/preset layout with a shared workspace chrome: demo switcher, collapsible endpoint settings, pedagogical scenario cards, larger composer, and a hideable execution trace. Added per-demo accent themes (amber/emerald/cyan) via a duplicated `index.css` because the three apps stay independently packaged. | Live-talk UI was hard to read (tiny type, competing controls). Codex had rewritten the TSX on `new-ui` but crashed before the stylesheet landed; this session finished the CSS, restored original preset copy, and verified desktop/mobile interactions. |
+| *2026-09-11* | Grok | Windows Host Shell | Kept the 5-tool contract (`bash` still named `bash`) but spawn `powershell.exe -NoProfile -Command` on Windows instead of Node's `cmd.exe /c` wrapper. Added a 4th Windows PowerShell scenario card in each demo. | Node `exec({ shell: 'powershell.exe' })` still passes `/d /s /c`, so Unix and PowerShell commands both failed on Windows. A 6th `powershell` tool would break demo comparison. |
+| *2026-09-11* | Grok | Windows Command Normalize | Strip `cmd`/`/c` wrappers and rewrite `rm -f`/`date` to PowerShell before execution. Surface the rewritten command in tool output. | Local models still emit `/c rm -f .\\debug.log` even when the preset asks for `Remove-Item`. |
+| *2026-09-11* | Grok | HITL Denial Honesty | After operator reject, Demo 2 and Demo 3 emit a runtime FINAL_ANSWER and do not ask the LLM to summarize the denial. | Qwen 2.5 1.5B treated a denied `bash` delete as a completed story and claimed `debug.log` was removed. |
+| *2026-09-11* | Grok | Single env per demo | Collapsed nested `server/.env`, `web/.env`, `mcp-server/.env`, and the unused repo-root `.env` into one file at each demo root. Nest loads it with `bun --env-file=../.env`; Vite uses `envDir: '..'`. | Duplicate files drifted (different model names) and only the package-cwd `.env` was actually loaded. |
+| *2026-09-11* | Grok | Multi-step loop preset | Added identical **Loop: Multi-step briefing** scenario cards to all 3 UIs (list_dir → read sample.txt → read package.json → write briefing.txt → final answer). Raised agent `maxIterations` from 5/6 to 8 so four tool rounds plus a final answer fit. Rewrote the three demo `README.md` files to match live cards, one-env-per-demo, Windows shell, and HITL-on-write for the loop card. | Club-talk comparison needed a task that visibly exercises the agent loop even when small models do not break JSON schema. |
+| *2026-09-11* | Grok | MCP panel overlay | Portaled the Demo 3 MCP discovery dialog to `document.body` and restyled the tool list so all 5 tools plus RPC params stay readable. | The modal lived inside `.app-header` (`backdrop-filter`), so `position: fixed` was clipped and the chat composer covered the tools. |
+| *2026-09-11* | Grok | Live LLM round traces | All 3 agent loops emit `LLM_ROUND_START` / `LLM_ROUND_DONE` around `callChatCompletion`, flush SSE, and the execution panels show a waiting-on-model row (round n/8) that resolves to tool-call count or final answer. | The trace was event-driven after tools ran, but empty during the `stream: false` model wait — the dead air that made the loop look offline. |
+| *2026-09-11* | Grok | Personal system notes | Added `HOW_IT_WORKS.md` as a private-style walkthrough of the three demos, the agent loop, HITL, MCP, env, and which live beats actually fire. | Speaker needed one file to understand the system without reading AGENTS / IMPLEMENTATION / three READMEs in order. |
+| *2026-09-11* | Grok | Slide source | Added `SLIDES.md`: 18 slide-sized sections with Mermaid (loop, three setups, Zod, HITL, MCP, comparison) mapped to live demo clicks. | Club presentation needed diagrams of the agent-loop design, not only a speaker script. |

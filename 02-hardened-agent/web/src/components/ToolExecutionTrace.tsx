@@ -1,5 +1,5 @@
-import React from 'react';
-import { Terminal, Shield, Trash2, Code2, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Shield, Trash2, Code2, AlertTriangle, CheckCircle2, ShieldAlert, Clock, Bot } from 'lucide-react';
 import { ToolTraceItem } from '../types';
 import { ValidationBadge } from './ValidationBadge';
 
@@ -9,13 +9,20 @@ interface ToolExecutionTraceProps {
 }
 
 export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, onClearTraces }) => {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [traces]);
+
   return (
-    <div className="flex h-full flex-col bg-slate-900/40 border-l border-slate-800">
+    <div className="trace-panel">
       {/* Panel Header */}
-      <div className="border-b border-slate-800 px-4 py-3 flex items-center justify-between bg-slate-900/60">
+      <div className="trace-heading">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-emerald-400" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">Defensive Validation Trace</h2>
+          <h2>Execution trace</h2>
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400">
             {traces.length}
           </span>
@@ -32,23 +39,50 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
       </div>
 
       {/* Trace Items */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-xs">
+      <div className="trace-list" ref={listRef}>
         {traces.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
-            <Code2 className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-xs text-slate-500">No tool activity yet</p>
-            <p className="text-[11px] text-slate-600 max-w-xs mt-1">
+          <div className="trace-empty">
+            <span className="trace-empty-icon"><Code2 size={26} strokeWidth={1.5} /></span>
+            <h3>See what actually runs</h3>
+            <p className="trace-empty-description">
               Zod validation results, self-correction iterations, permission decisions, and execution outputs will appear here.
             </p>
           </div>
         ) : (
-          traces.map((trace) => (
-            <div
+          traces.map((trace) =>
+            trace.toolName === 'llm' ? (
+              <div key={trace.id} className="trace-round" data-state={trace.status}>
+                <div className="trace-round-label">
+                  {trace.status === 'thinking' ? (
+                    <Clock className="h-3.5 w-3.5 animate-spin" />
+                  ) : trace.status === 'error' ? (
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  ) : (
+                    <Bot className="h-3.5 w-3.5" />
+                  )}
+                  <span>
+                    {trace.status === 'thinking'
+                      ? 'Waiting on model'
+                      : trace.status === 'error'
+                      ? 'Model round failed'
+                      : 'Model replied'}
+                  </span>
+                  {trace.iteration != null && (
+                    <span className="trace-round-meta">
+                      round {trace.iteration}/{trace.maxIterations ?? '?'}
+                    </span>
+                  )}
+                </div>
+                <span className="trace-round-result">{trace.error || trace.result || ''}</span>
+              </div>
+            ) : (
+            <details
+              open
               key={trace.id}
-              className={`rounded-lg border p-3 transition ${
+              className={`trace-card rounded-lg border p-3 transition ${
                 trace.status === 'circuit_breaker'
                   ? 'border-purple-800 bg-purple-950/20'
-                  : trace.status === 'hallucinated' || trace.status === 'error'
+                  : trace.status === 'hallucinated' || trace.status === 'error' || trace.status === 'rejected'
                   ? 'border-rose-900/70 bg-rose-950/20'
                   : trace.status === 'waiting_approval'
                   ? 'border-amber-700/80 bg-amber-950/20'
@@ -58,11 +92,11 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
               }`}
             >
               {/* Header with tool name and validation badge */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <summary className="trace-card-heading">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded bg-slate-800 text-slate-200 border border-slate-700 px-2 py-0.5 text-[11px] font-bold">
                     {trace.toolName}
-                  </span>
+                  </span><span className="trace-state">{trace.status.replace(/_/g, ' ')}</span>
                   {trace.validationBadge && <ValidationBadge badge={trace.validationBadge} />}
                   {trace.status === 'waiting_approval' && (
                     <span className="inline-flex items-center gap-1 rounded bg-amber-950/80 border border-amber-600 px-2 py-0.5 text-[10px] font-bold text-amber-300">
@@ -70,11 +104,17 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                       HITL Approval Required
                     </span>
                   )}
+                  {trace.status === 'rejected' && (
+                    <span className="inline-flex items-center gap-1 rounded bg-rose-950/80 border border-rose-600 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+                      <ShieldAlert className="h-3 w-3" />
+                      Operator Denied
+                    </span>
+                  )}
                 </div>
                 <span className="text-[10px] text-slate-500">
                   {new Date(trace.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
-              </div>
+              </summary>
 
               {/* Arguments Section */}
               <div className="mt-2 space-y-1">
@@ -108,6 +148,8 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                 </div>
               )}
 
+              {trace.error && <div className="rounded border border-rose-900/60 bg-rose-950/30 p-3 text-rose-300"><strong>Execution error</strong><pre className="whitespace-pre-wrap">{trace.error}</pre></div>}
+
               {/* Success Result */}
               {trace.result && (
                 <div className="mt-2 space-y-1">
@@ -119,8 +161,9 @@ export const ToolExecutionTrace: React.FC<ToolExecutionTraceProps> = ({ traces, 
                   </pre>
                 </div>
               )}
-            </div>
-          ))
+            </details>
+            )
+          )
         )}
       </div>
     </div>

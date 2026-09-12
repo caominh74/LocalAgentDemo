@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Cpu, Sparkles } from 'lucide-react';
+import { ArrowUp, Bot, Network, ArrowUpRight, ChevronDown, FlaskConical } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 interface ChatThreadProps {
@@ -14,136 +14,167 @@ export const PRESET_PROMPTS = [
     label: 'Test 1: Dynamic Tool Call',
     prompt: 'Inspect the files in the current directory using list_dir.',
     desc: 'Autonomous Tier 1 tool executed over decoupled stdio JSON-RPC',
+    tool: 'list_dir',
   },
   {
     label: 'Test 2: Tier 2 MCP Write',
     prompt: 'Create a file named demo-mcp.txt with the content "Hello from Model Context Protocol!".',
     desc: 'HITL gate intercepts mutation before dispatching tools/call to MCP server',
+    tool: 'write',
   },
   {
     label: 'Test 3: Tier 3 MCP Shell',
     prompt: 'Execute a bash command to check the current date and time.',
     desc: 'High-risk shell execution with preview delegated to isolated MCP process',
+    tool: 'bash',
+  },
+  {
+    label: 'Test 4: Tier 3 MCP PowerShell (Windows)',
+    prompt: 'Call the bash tool and set command to exactly Get-Date with no cmd, /c, or date prefix.',
+    desc: 'Windows host: Get-Date runs in PowerShell after MCP approval',
+    tool: 'bash',
+    os: 'windows',
+  },
+  {
+    label: 'Loop: Multi-step briefing',
+    prompt:
+      'Complete this as a multi-step agent task. Call exactly one tool per turn. Do not skip steps. Do not use bash. Do not delete any files.\n\n1. Call list_dir on path "." to list the sandbox.\n2. Call read on path "./sample.txt".\n3. Call read on path "./package.json".\n4. Call write to create "./briefing.txt" containing exactly two lines:\nsample: <the first line of sample.txt>\npackage: <the name field from package.json>\n5. Stop calling tools. Reply with a short final answer that quotes both lines you wrote.',
+    desc: 'Same 4-step loop over MCP stdio; write is gated before tools/call',
+    tool: '4-step',
   },
 ];
 
-export const ChatThread: React.FC<ChatThreadProps> = ({
-  messages,
-  isStreaming,
-  onSendMessage,
-  onSelectPromptPreset,
-}) => {
+export function ChatThread({ messages, isStreaming, onSendMessage, onSelectPromptPreset }: ChatThreadProps) {
   const [input, setInput] = useState('');
+  const [showPresets, setShowPresets] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, isStreaming]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!input.trim() || isStreaming) return;
     onSendMessage(input.trim());
     setInput('');
   };
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
-      {/* MCP Presets */}
-      <div className="border-b border-slate-800/80 bg-slate-900/30 px-4 py-2.5">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5">
-          <Sparkles className="h-3 w-3 text-cyan-400" />
-          <span>MCP Protocol Presets:</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {PRESET_PROMPTS.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => onSelectPromptPreset(preset.prompt)}
-              className="rounded border border-cyan-500/30 bg-cyan-950/20 hover:bg-cyan-950/40 p-2 text-left transition flex flex-col justify-between"
-            >
-              <span className="text-[11px] font-semibold text-cyan-300">{preset.label}</span>
-              <span className="text-[10px] text-slate-400 font-normal mt-0.5 leading-tight">{preset.desc}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="chat-panel">
+      <section className="scenario-section" aria-label="Demo scenarios">
+        <button
+          className="scenario-toggle"
+          onClick={() => setShowPresets(!showPresets)}
+          aria-expanded={showPresets}
+          aria-controls="scenario-grid"
+        >
+          <span>
+            <FlaskConical size={15} />
+            Try a scenario
+            <span className="count-badge">{String(PRESET_PROMPTS.length).padStart(2, '0')}</span>
+          </span>
+          <ChevronDown size={16} className={showPresets ? 'rotate-180' : ''} />
+        </button>
+        {showPresets && (
+          <div id="scenario-grid" className="scenario-grid">
+            {PRESET_PROMPTS.map((preset, idx) => (
+              <button
+                key={preset.label}
+                className={preset.os === 'windows' ? 'scenario-card scenario-card-windows' : 'scenario-card'}
+                disabled={isStreaming}
+                title={preset.prompt}
+                onClick={() => {
+                  if (!isStreaming) onSelectPromptPreset(preset.prompt);
+                }}
+              >
+                <div className="scenario-meta">
+                  <span>0{idx + 1}</span>
+                  <code>{preset.tool}</code>
+                  {preset.os === 'windows' && <span className="scenario-os">Windows</span>}
+                  <ArrowUpRight size={15} />
+                </div>
+                <strong>{preset.label}</strong>
+                <p>{preset.desc}</p>
+                <span className="scenario-run">
+                  Run scenario <span aria-hidden="true">→</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
-      {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="message-list" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center p-6 text-slate-500">
-            <Cpu className="h-10 w-10 text-cyan-600 mb-3" />
-            <p className="text-sm font-medium text-slate-400">MCP Agent Ready</p>
-            <p className="text-xs max-w-sm mt-1 text-slate-500">
-              Submit prompts to observe dynamic JSON-RPC tool discovery and out-of-process tool execution via stdio.
+          <div className="chat-empty">
+            <span className="empty-icon">
+              <Network size={28} strokeWidth={1.5} />
+            </span>
+            <span className="eyebrow">THE PROTOCOL LAYER</span>
+            <h2>Follow a tool beyond the agent.</h2>
+            <p>
+              Explore dynamic tool discovery and execution over stdio. Inspect MCP activity and review file or shell
+              actions before dispatch.
             </p>
+            <div className="tool-chips">
+              {['read', 'write', 'edit', 'bash', 'list_dir'].map((tool) => (
+                <code key={tool}>{tool}</code>
+              ))}
+            </div>
           </div>
         ) : (
           messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 text-xs leading-relaxed ${
-                msg.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              {msg.role === 'assistant' && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                  <Bot className="h-4 w-4" />
-                </div>
-              )}
-
-              <div
-                className={`rounded-lg px-4 py-2.5 max-w-[85%] ${
-                  msg.role === 'user'
-                    ? 'bg-cyan-600 text-white font-normal'
-                    : 'bg-slate-900 border border-slate-800 text-slate-200'
-                }`}
-              >
-                <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
-                <div className="mt-1 text-[10px] text-slate-400 opacity-60 text-right">
+            <article key={msg.id} className={'message message-' + msg.role}>
+              <div className="message-meta">
+                <span>{msg.role === 'user' ? 'You' : 'MCP agent'}</span>
+                <time dateTime={msg.timestamp}>
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                </div>
+                </time>
               </div>
-
-              {msg.role === 'user' && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
-            </div>
+              <div className="message-content">{msg.content}</div>
+            </article>
           ))
         )}
-
         {isStreaming && (
-          <div className="flex gap-3 items-center text-xs text-cyan-400 animate-pulse pl-1">
-            <Bot className="h-4 w-4" />
-            <span>Agent communicating via MCP stdio...</span>
+          <div className="working-status" role="status">
+            <Bot size={17} />
+            <span>
+              Agent is working<span className="working-dots">…</span>
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box */}
-      <form onSubmit={handleSubmit} className="border-t border-slate-800 p-3 bg-slate-900/40">
-        <div className="flex gap-2">
-          <input
-            type="text"
+      <form ref={formRef} onSubmit={handleSubmit} className="composer">
+        <div className="composer-box">
+          <textarea
+            aria-label="Message to the agent"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a prompt for the MCP agent..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                formRef.current?.requestSubmit();
+              }
+            }}
+            placeholder="Ask the agent to do something…"
+            rows={2}
             disabled={isStreaming}
-            className="flex-1 rounded-md bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 disabled:opacity-50"
           />
-          <button
-            type="submit"
-            disabled={isStreaming || !input.trim()}
-            className="flex items-center justify-center rounded-md bg-cyan-500 hover:bg-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950 transition disabled:opacity-50"
-          >
-            <Send className="h-3.5 w-3.5" />
+          <button className="send-button" type="submit" aria-label="Send message" disabled={isStreaming || !input.trim()}>
+            <ArrowUp size={20} />
           </button>
+        </div>
+        <div className="composer-hint">
+          <span>
+            Enter to send <span aria-hidden="true">·</span> Shift + Enter for a new line
+          </span>
+          <span>File changes & shell calls need approval</span>
         </div>
       </form>
     </div>
   );
-};
+}

@@ -24,7 +24,10 @@ export const EditToolSchema = z.object({
 
 // 4. bash schema
 export const BashToolSchema = z.object({
-  command: z.string().min(1, 'command cannot be empty').describe('Shell command string to execute in workspace'),
+  command: z
+    .string()
+    .min(1, 'command cannot be empty')
+    .describe('Host-shell command. On Windows this runs in PowerShell (e.g. Remove-Item, Get-Date). On macOS/Linux this runs in bash.'),
   timeout: z.number().int().positive('timeout must be a positive millisecond value').max(120000, 'timeout cannot exceed 120s').optional().default(30000).describe('Maximum execution time in milliseconds (default 30000)'),
 });
 
@@ -74,7 +77,7 @@ export function getOpenAIToolDefinitions(): any[] {
       type: 'function',
       function: {
         name: 'bash',
-        description: 'Execute a shell command inside the workspace directory. Requires Tier 3 confirmation with command preview.',
+        description: 'Execute a host-shell command (PowerShell on Windows, bash on macOS/Linux). Requires Tier 3 confirmation with command preview.',
         parameters: zodToJsonSchema(BashToolSchema, { target: 'openApi3' }) as any,
       },
     },

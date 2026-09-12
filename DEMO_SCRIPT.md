@@ -47,6 +47,11 @@
    - **Point to the Right Panel**: Show that the backend immediately dispatched the shell deletion of `debug.log` without asking the operator.
    - **Key Takeaway**: *"Autonomous shell execution without a human-in-the-loop gate is an unacceptable security risk."*
 
+5. **Step 4 (the agent loop, not a schema trap)**:
+   - Click **Loop: Multi-step briefing**.
+   - **Point to the Right Panel**: four sequential tool traces (`list_dir` → `read` → `read` → `write`) then a final answer. The write is not paused.
+   - **Key Takeaway**: *"This is an agent loop: model, tool, result, model again. Demo 1 has the loop and none of the brakes."*
+
 ---
 
 ### Act 2: Defensive Runtime Engineering & HITL Gates (5 mins)
@@ -79,6 +84,12 @@
      - Tier 3 (High Risk): Full command preview with strict approval (`bash`)
    - Click **"Approve & Execute"** $\rightarrow$ Show the tool completing and the model synthesizing the final answer.
 
+4. **Step 3: Same multi-step task, now gated**:
+   - Click **Loop: Multi-step briefing** (identical prompt to Demo 1).
+   - Steps 1–3 (`list_dir`, `read`, `read`) run on their own. Step 4 (`write briefing.txt`) pops the Tier 2 modal.
+   - Approve → the loop resumes → final answer quotes the briefing.
+   - **Key Takeaway**: *"We did not change the model. We paused the same loop on a mutating tool."*
+
 ---
 
 ### Act 3: Standardizing via Model Context Protocol (MCP) (5 mins)
@@ -102,6 +113,10 @@
    - Show the HITL gate intercepting the write action before dispatching `tools/call`.
    - Click **"Approve & Dispatch to MCP"** $\rightarrow$ show the JSON-RPC execution completing in the isolated tool process.
 
+4. **Optional: Multi-step over MCP**:
+   - Click **Loop: Multi-step briefing**.
+   - Same four tool rounds as Demos 1 and 2; each turn is a `tools/call` in the RPC drawer. The write still waits for HITL.
+
 ---
 
 ## Testing Presets Matrix & Pedagogical Purpose
@@ -119,6 +134,12 @@ This table explains the deliberate engineering purpose of every preset button ac
 | **03 (MCP)** | **Test 1: Dynamic Tool Call** | `Inspect the files in the current directory using list_dir.` | **Demonstrates MCP Decoupling**: Autonomous Tier 1 tool executed over out-of-process `stdio` JSON-RPC without local backend tool code. |
 | **03 (MCP)** | **Test 2: Tier 2 MCP Write** | `Create a file named demo-mcp.txt with content "Hello from Model Context Protocol!".` | **Demonstrates Pre-RPC HITL Security**: Tier 2 gate halts execution and requests operator approval before transmitting `tools/call` over the MCP transport. |
 | **03 (MCP)** | **Test 3: Tier 3 MCP Shell** | `Execute a bash command to check the current date and time.` | **Demonstrates Protocol-Standard Sandboxing**: High-risk terminal command guarded by preview modal, isolated inside standalone subprocess. |
+| **01 (Naive)** | **Failure 4: Unchecked PowerShell (Windows)** | `Use the bash tool ... Remove-Item -Force ./debug.log` | **Windows host**: Same blind-deletion demo using PowerShell, because `bash` executes in `powershell.exe` on Windows. |
+| **02 (Hardened)** | **Test 4: Tier 3 HITL PowerShell (Windows)** | `Use the bash tool ... Remove-Item -Force ./debug.log` | **Windows host**: Tier 3 red modal previews the PowerShell command (`PS>`) before execution. |
+| **03 (MCP)** | **Test 4: Tier 3 MCP PowerShell (Windows)** | `Use the bash tool ... Get-Date` | **Windows host**: Date/time check via PowerShell `Get-Date`, still gated and dispatched over MCP stdio. |
+| **01 (Naive)** | **Loop: Multi-step briefing** | `list_dir` → `read sample.txt` → `read package.json` → `write briefing.txt` → final answer | **Shows the unguarded agent loop**: four sequential tool rounds then a spoken answer. The `write` runs immediately with no pause. |
+| **02 (Hardened)** | **Loop: Multi-step briefing** | Same 5-step prompt | **Shows loop + gate**: Tier 1 `list_dir`/`read` run; Tier 2 `write` pauses the loop for approval; after Approve the model gives the briefing. |
+| **03 (MCP)** | **Loop: Multi-step briefing** | Same 5-step prompt | **Shows loop over stdio**: same four tool rounds as JSON-RPC `tools/call`; `write` is gated before the RPC. |
 
 ---
 

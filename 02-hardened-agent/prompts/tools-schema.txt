@@ -87,7 +87,7 @@
     "type": "function",
     "function": {
       "name": "bash",
-      "description": "Execute a shell command inside the workspace directory. Requires Tier 3 confirmation with command preview.",
+      "description": "Execute a host-shell command (PowerShell on Windows, bash on macOS/Linux). Requires Tier 3 confirmation with command preview. On Windows prefer PowerShell cmdlets such as Remove-Item and Get-Date.",
       "parameters": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
@@ -95,7 +95,7 @@
           "command": {
             "type": "string",
             "minLength": 1,
-            "description": "The shell command string to execute in host shell."
+            "description": "Command string for the host shell (PowerShell on Windows, bash on macOS/Linux)."
           },
           "timeout": {
             "type": "integer",

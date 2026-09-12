@@ -1,86 +1,133 @@
 import React, { useState } from 'react';
-import { Settings2, ShieldCheck, Lock } from 'lucide-react';
+import { Settings2, Terminal, ShieldCheck, ChevronDown, ArrowRight } from 'lucide-react';
 import { AgentConfig } from '../types';
 
 interface ConfigHeaderProps {
   config: AgentConfig;
-  onChangeConfig: (newConfig: AgentConfig) => void;
+  onChangeConfig: (config: AgentConfig) => void;
 }
 
-export const ConfigHeader: React.FC<ConfigHeaderProps> = ({ config, onChangeConfig }) => {
+export function ConfigHeader({ config, onChangeConfig }: ConfigHeaderProps) {
   const [showSettings, setShowSettings] = useState(false);
 
+  const demoUrl = (port: number) => {
+    const url = new URL(window.location.href);
+    url.port = String(port);
+    url.pathname = '/';
+    url.search = '';
+    url.hash = '';
+    return url.href;
+  };
+
   return (
-    <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 py-3 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            <ShieldCheck className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-tight text-white">Demo 2: The Hardened Agent</h1>
-              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 border border-slate-700">Port 5174</span>
-              <span className="rounded bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
-                <Lock className="h-3 w-3" /> Zod + HITL Guard
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500">Strict Schema · 2-Retry Circuit Breaker · 3-Tier Interactive Permission Gate</p>
-          </div>
+    <header className="app-header">
+      <div className="topbar">
+        <div className="brand">
+          <span className="brand-mark">
+            <Terminal size={19} />
+          </span>
+          <span>
+            Local Agent
+            <span className="brand-sub">Architecture lab</span>
+          </span>
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-md border border-slate-800">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{config.model}</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-500 text-[11px] truncate max-w-[180px]">{config.baseUrl}</span>
-          </div>
-
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-1.5 rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-200 border border-slate-700 transition"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            <span>Endpoint</span>
-          </button>
-        </div>
+        <nav className="demo-nav" aria-label="Agent demos">
+          {['Naive', 'Hardened', 'MCP'].map((name, idx) => (
+            <a
+              key={name}
+              href={demoUrl(5173 + idx)}
+              aria-current={idx === 1 ? 'page' : undefined}
+            >
+              <span>0{idx + 1}</span>
+              {name}
+            </a>
+          ))}
+        </nav>
+        <button
+          className="secondary-button settings-toggle"
+          aria-expanded={showSettings}
+          aria-controls="endpoint-settings"
+          onClick={() => setShowSettings(!showSettings)}
+        >
+          <Settings2 size={16} />
+          Endpoint settings
+          <ChevronDown size={14} className={showSettings ? 'rotate-180' : ''} />
+        </button>
       </div>
 
       {showSettings && (
-        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">Inference Base URL</label>
-            <input
-              type="text"
-              value={config.baseUrl}
-              onChange={(e) => onChangeConfig({ ...config, baseUrl: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono text-xs"
-              placeholder="http://localhost:11434/v1"
-            />
+        <section id="endpoint-settings" className="endpoint-settings" aria-label="Endpoint settings">
+          <div className="settings-caption">
+            <strong>Inference connection</strong>
+            <span>Changes apply to the next request.</span>
           </div>
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">Model Name</label>
-            <input
-              type="text"
-              value={config.model}
-              onChange={(e) => onChangeConfig({ ...config, model: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono text-xs"
-              placeholder="llama3.2"
-            />
+          <div className="settings-fields">
+            <label htmlFor="base-url">
+              Inference base URL
+              <input
+                id="base-url"
+                type="url"
+                value={config.baseUrl}
+                onChange={(e) => onChangeConfig({ ...config, baseUrl: e.target.value })}
+                placeholder="http://localhost:11434/v1"
+                spellCheck={false}
+              />
+            </label>
+            <label htmlFor="model-name">
+              Model name
+              <input
+                id="model-name"
+                value={config.model}
+                onChange={(e) => onChangeConfig({ ...config, model: e.target.value })}
+                placeholder="Model identifier"
+                spellCheck={false}
+              />
+            </label>
+            <label htmlFor="api-key">
+              API key
+              <input
+                id="api-key"
+                type="password"
+                value={config.apiKey}
+                onChange={(e) => onChangeConfig({ ...config, apiKey: e.target.value })}
+                placeholder="API key (if required)"
+                autoComplete="off"
+              />
+            </label>
           </div>
-          <div>
-            <label className="block text-slate-400 font-medium mb-1">API Key</label>
-            <input
-              type="password"
-              value={config.apiKey}
-              onChange={(e) => onChangeConfig({ ...config, apiKey: e.target.value })}
-              className="w-full rounded bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono text-xs"
-              placeholder="ollama"
-            />
-          </div>
-        </div>
+        </section>
       )}
+
+      <div className="demo-heading">
+        <div>
+          <div className="eyebrow">
+            EXPERIMENT 02<span>PORT 5174</span>
+          </div>
+          <div className="demo-title">
+            <h1>Hardened agent</h1>
+            <span className="mode-badge">
+              <ShieldCheck size={13} />
+              Validation + approval
+            </span>
+          </div>
+          <p>Follow schema checks, self-correction, and human approval before execution.</p>
+        </div>
+        <div className="connection-summary">
+          <div className="model-label">CONFIGURED MODEL</div>
+          <strong>{config.model || 'Not configured'}</strong>
+          <span className="endpoint-address" title={config.baseUrl}>
+            {config.baseUrl || 'Choose an endpoint to get started'}
+          </span>
+        </div>
+      </div>
+      <div className="architecture-path" aria-label="Execution architecture">
+        <span>Model</span>
+        <ArrowRight size={13} />
+        <span>Validate + approve</span>
+        <ArrowRight size={13} />
+        <span>Execute</span>
+        <span className="path-note">Read freely · approve file changes and shell calls</span>
+      </div>
     </header>
   );
-};
+}

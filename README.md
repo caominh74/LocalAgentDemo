@@ -36,7 +36,7 @@ Under no circumstances do tool definitions diverge across the 3 setups. All thre
 1. **`read`**: Read workspace file contents (`path`, optional `offset`, optional `limit`).
 2. **`write`**: Write or overwrite file contents, creating parent directories (`path`, `content`).
 3. **`edit`**: Surgical search-and-replace of exact string chunks (`path`, `oldText`, `newText`).
-4. **`bash`**: Execute shell commands inside the workspace (`command`, optional `timeout`).
+4. **`bash`**: Execute a host-shell command inside the workspace (`command`, optional `timeout`). On Windows this is PowerShell; on macOS/Linux this is bash. The tool name stays `bash` so the three demos stay comparable.
 5. **`list_dir`**: Traverse file and directory hierarchies (`path`, optional `depth`).
 
 ---
@@ -45,10 +45,14 @@ Under no circumstances do tool definitions diverge across the 3 setups. All thre
 
 ### Prerequisites
 - **[Bun](https://bun.sh)** installed (v1.3+). *Note: npm/yarn/pnpm are prohibited.*
-- **Ollama** or **vLLM** running locally:
+- **Ollama**, **vLLM**, or **LM Studio** running locally.
+- Each demo has **one** env file at the demo root. Copy the example if you do not have it yet:
   ```bash
-  ollama run llama3.2
+  cp 01-basic-agent/.env.example 01-basic-agent/.env
+  cp 02-hardened-agent/.env.example 02-hardened-agent/.env
+  cp 03-mcp-agent/.env.example 03-mcp-agent/.env
   ```
+  Edit `LLM_BASE_URL` / `LLM_MODEL` in that file (LM Studio default is `http://localhost:1234/v1`). The same file feeds the Nest server and the Vite app.
 
 ### 1. Launch Everything with the Tabbed TUI (`mprocs`)
 To run all 7 services across all 3 demos simultaneously in a single terminal with switchable tabs:
@@ -74,6 +78,8 @@ bun run demo:3
 
 ```text
 LocalAgentDemo/
+├── HOW_IT_WORKS.md            # Personal walkthrough of the system (read this to understand)
+├── SLIDES.md                  # Slide source with Mermaid diagrams for the club talk
 ├── AGENTS.md                  # Project Constitution, rules, invariants, coding standards
 ├── IMPLEMENTATION.md          # Self-evolving task ledger, changelog, and decision log
 ├── DEMO_SCRIPT.md             # 15-minute live talk presentation script & talk track
@@ -81,23 +87,29 @@ LocalAgentDemo/
 ├── package.json               # Root orchestrator scripts
 │
 ├── 01-basic-agent/            # Demo 1: The Naive Agent
+│   ├── .env.example           # One env file per demo (copy to .env)
 │   ├── prompts/               # Plain-text prompt and tools-schema assets
+│   ├── sandbox/               # Isolated tool workspace
 │   ├── server/                # NestJS API (Port 3001)
 │   ├── web/                   # React UI (Port 5173)
-│   └── README.md              # 3 reproducible failure prompts documented
+│   └── README.md              # Scenario cards: failures, Windows shell, multi-step loop
 │
 ├── 02-hardened-agent/         # Demo 2: The Hardened Agent
+│   ├── .env.example           # One env file per demo (copy to .env)
 │   ├── prompts/               # Hardened prompt and Zod schema exports
+│   ├── sandbox/               # Isolated tool workspace
 │   ├── server/                # NestJS API with Zod & HITL Guard (Port 3002)
 │   ├── web/                   # React UI with validation badges & approval modal (Port 5174)
-│   └── README.md              # Defensive architecture & HITL walkthrough
+│   └── README.md              # Zod, circuit breaker, HITL, multi-step loop
 │
 └── 03-mcp-agent/              # Demo 3: The Model Context Protocol (MCP) Agent
+    ├── .env.example           # One env file per demo (copy to .env)
     ├── prompts/               # Prompt and exported MCP tool schemas
+    ├── sandbox/               # Isolated tool workspace
     ├── mcp-server/            # Standalone stdio MCP Server exposing the 5 tools
     ├── server/                # NestJS API with MCP Client SDK (Port 3003)
     ├── web/                   # React UI with MCP status badge & RPC telemetry (Port 5175)
-    └── README.md              # MCP decoupling & protocol guide
+    └── README.md              # MCP decoupling, HITL-before-RPC, multi-step loop
 ```
 
 ---

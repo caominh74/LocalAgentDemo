@@ -3,11 +3,79 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 
 const workspaceRoot = path.resolve(process.env.WORKSPACE_DIR || path.join(__dirname, '../../sandbox'));
 if (!fs.existsSync(workspaceRoot)) {
   fs.mkdirSync(workspaceRoot, { recursive: true });
+}
+
+function psQuote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function unwrapShellWrappers(raw: string): string {
+  let cmd = raw.trim();
+  const cmdWrapper = /^(?:cmd(?:\.exe)?\s+)?(?:\/d\s+)?(?:\/s\s+)?(?:\/c\s+)/i;
+  const psWrapper = /^powershell(?:\.exe)?(?:\s+-\w+(?:\s+\S+)?)+\s+(?:-command|-c)\s+/i;
+  const bashWrapper = /^(?:\/bin\/)?bash(?:\.exe)?\s+-c\s+/i;
+  for (let i = 0; i < 4; i++) {
+    const next = cmd
+      .replace(cmdWrapper, '')
+      .replace(psWrapper, '')
+      .replace(bashWrapper, '')
+      .trim()
+      .replace(/^["'](.+)["']$/s, '$1')
+      .trim();
+    if (next === cmd) break;
+    cmd = next;
+  }
+  return cmd;
+}
+
+function toPowerShellCommand(command: string): string {
+  const cmd = unwrapShellWrappers(command);
+  if (/^rm(\s|$)/.test(cmd)) {
+    const recursive = /(^|\s)-{1,2}[a-zA-Z]*r[a-zA-Z]*\b/i.test(cmd);
+    const target = cmd.replace(/^rm\s+/, '').replace(/(?:^|\s)--?\w+/g, ' ').trim();
+    if (target) {
+      return recursive
+        ? `Remove-Item -Recurse -Force -LiteralPath ${psQuote(target)}`
+        : `Remove-Item -Force -LiteralPath ${psQuote(target)}`;
+    }
+  }
+  if (/^date\s*$/i.test(cmd)) {
+    return 'Get-Date';
+  }
+  return cmd;
+}
+
+function runHostShell(command: string, cwd: string, timeout: number): Promise<string> {
+  const isWin = process.platform === 'win32';
+  const file = isWin ? 'powershell.exe' : fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh';
+  const resolved = isWin ? toPowerShellCommand(command) : unwrapShellWrappers(command);
+  const cliArgs = isWin
+    ? ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', resolved]
+    : ['-c', resolved];
+  const shellName = isWin ? 'powershell' : 'bash';
+  const rewriteNote = resolved !== command.trim() ? `[normalized command: ${resolved}]\n` : '';
+
+  return new Promise((resolve) => {
+    execFile(
+      file,
+      cliArgs,
+      { cwd, timeout, maxBuffer: 1024 * 1024 * 10, windowsHide: true },
+      (error, stdout, stderr) => {
+        const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
+        const header = `[host shell: ${shellName}]\n${rewriteNote}`;
+        if (error) {
+          resolve(`${header}[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
+        } else {
+          resolve(`${header}${output || '(command completed with empty output)'}`);
+        }
+      },
+    );
+  });
 }
 
 function resolvePath(targetPath: string): string {
@@ -60,28 +128,9 @@ async function toolEdit(args: { path: string; oldText: string; newText: string }
   return `Successfully replaced text chunk in ${args.path}`;
 }
 
-// 4. bash
+// 4. bash — host shell (PowerShell on Windows, bash on Unix)
 async function toolBash(args: { command: string; timeout?: number }): Promise<string> {
-  const timeout = args.timeout || 30000;
-  return new Promise((resolve) => {
-    exec(
-      args.command,
-      {
-        cwd: workspaceRoot,
-        timeout,
-        maxBuffer: 1024 * 1024 * 10,
-        shell: process.platform === 'win32' ? 'powershell.exe' : undefined,
-      },
-      (error, stdout, stderr) => {
-        const output = (stdout || '') + (stderr ? `\n[STDERR]\n${stderr}` : '');
-        if (error) {
-          resolve(`[Exit Code ${error.code ?? 1}]\n${output || error.message}`);
-        } else {
-          resolve(output || '(command completed with empty output)');
-        }
-      }
-    );
-  });
+  return runHostShell(args.command, workspaceRoot, args.timeout || 30000);
 }
 
 // 5. list_dir
@@ -169,11 +218,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'bash',
-        description: 'Execute shell command in workspace (MCP Tool).',
+        description:
+          'Execute a command in the host shell (PowerShell on Windows, bash on macOS/Linux). On Windows prefer PowerShell cmdlets such as Remove-Item and Get-Date.',
         inputSchema: {
           type: 'object',
           properties: {
-            command: { type: 'string', minLength: 1, description: 'Command string to execute in host shell' },
+            command: {
+              type: 'string',
+              minLength: 1,
+              description: 'Command string for the host shell (PowerShell on Windows, bash on macOS/Linux)',
+            },
             timeout: { type: 'number', description: 'Execution timeout in milliseconds (default 30000)' },
           },
           required: ['command'],

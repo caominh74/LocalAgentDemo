@@ -75,11 +75,11 @@ All three setups must implement and evaluate the **exact same 5 tools**. Under n
 - **Output**: Confirmation of match and replacement diff metadata.
 
 ### 4. `bash`
-- **Purpose**: Execute a shell command inside the project workspace directory.
+- **Purpose**: Execute a shell command inside the project workspace directory. The tool name stays `bash` on every host so the three demos remain comparable. On Windows the command runs in PowerShell (`powershell.exe -NoProfile -Command`). On macOS/Linux it runs in bash.
 - **Arguments**:
-  - `command` (`string`, **required**): The command string to execute in the host shell.
+  - `command` (`string`, **required**): The command string to execute in the host shell (PowerShell cmdlets on Windows, POSIX commands on Unix).
   - `timeout` (`number`, *optional*): Maximum execution time in milliseconds (default: 30000).
-- **Output**: Combined stdout and stderr string with exit status code.
+- **Output**: Combined stdout and stderr string with exit status code, prefixed with the host shell name.
 
 ### 5. `list_dir`
 - **Purpose**: Inspect directory structures and file hierarchy.
